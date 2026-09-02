@@ -22,6 +22,7 @@
             position: relative;
             overflow-x: hidden;
         }
+        /* Fondo interactivo de partículas en movimiento */
         #bgCanvas {
             position: fixed;
             top: 0;
@@ -48,14 +49,15 @@
             color: #00ff66;
             text-shadow: 0 0 10px rgba(0,255,102,0.6);
         }
+        /* Insignia VIP X EXTREME - Neon Gold con Check */
         .badge-vip {
             background: linear-gradient(135deg, #ffd700, #ff8c00);
             color: #000;
-            padding: 4px 10px;
-            font-size: 0.7rem;
+            padding: 5px 12px;
+            font-size: 0.75rem;
             font-weight: bold;
             border-radius: 4px;
-            box-shadow: 0 0 12px rgba(255,215,0,0.7);
+            box-shadow: 0 0 15px rgba(255,215,0,0.8);
             border: 1px solid #fff;
             letter-spacing: 1px;
         }
@@ -63,4 +65,260 @@
             background: #151515;
             color: #888;
             border: 1px solid #333;
-            padding: 4px
+            padding: 4px 8px;
+            font-size: 0.65rem;
+            border-radius: 3px;
+        }
+        main {
+            max-width: 650px;
+            margin: auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 2;
+        }
+        .panel {
+            background: rgba(8, 8, 8, 0.92);
+            border: 1px solid #00ff6644;
+            padding: 20px;
+            border-radius: 6px;
+            box-shadow: 0 0 20px rgba(0,255,102,0.08);
+            backdrop-filter: blur(5px);
+        }
+        h2 {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: #fff;
+            border-bottom: 1px dashed #00ff6633;
+            padding-bottom: 5px;
+        }
+        p {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        input, button {
+            width: 100%;
+            background: #000;
+            border: 1px solid #00ff6666;
+            color: #00ff66;
+            padding: 10px;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            outline: none;
+            margin-bottom: 10px;
+        }
+        button {
+            background: #00ff66;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 1px;
+        }
+        button:hover {
+            background: #00cc52;
+            box-shadow: 0 0 12px rgba(0,255,102,0.5);
+        }
+        .chat-box {
+            height: 180px;
+            background: #000;
+            border: 1px solid #00ff6633;
+            border-radius: 4px;
+            padding: 10px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .msg {
+            border-left: 2px solid #00ff66;
+            padding-left: 6px;
+            color: #ccc;
+        }
+        .msg span {
+            color: #00ff66;
+            font-weight: bold;
+        }
+        .btc-box {
+            background: #000;
+            border: 1px dashed #ffd700;
+            padding: 12px;
+            word-break: break-all;
+            font-size: 0.75rem;
+            color: #ffd700;
+            text-align: center;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            box-shadow: inset 0 0 10px rgba(255,215,0,0.1);
+        }
+        .hidden {
+            display: none !important;
+        }
+        footer {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #555;
+            border-top: 1px solid #00ff6622;
+            padding-top: 10px;
+            z-index: 2;
+            background: rgba(2, 2, 2, 0.85);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Canvas del fondo interactivo de partículas -->
+    <canvas id="bgCanvas"></canvas>
+
+    <header>
+        <div class="logo">DIO3.COM</div>
+        <div id="userBadge" class="badge-pending">🔒 PENDING AUTH</div>
+    </header>
+
+    <main>
+        <!-- SECCIÓN DE AUTENTICACIÓN -->
+        <div id="authPanel" class="panel">
+            <h2>AUTENTICACIÓN DE NÚCLEO SEGURO</h2>
+            <p>Acceso estrictamente privado. Ingrese su clave numérica de operador (Maestra: 197126).</p>
+            <input type="password" id="credentialInput" placeholder="Clave numérica..." autocomplete="off">
+            <button id="authBtn">ACCEDER AL NÚCLEO</button>
+        </div>
+
+        <!-- PASARELA DE PAGOS EN BTC (Trust Wallet) -->
+        <div id="paymentPanel" class="panel">
+            <h2>PASARELA DE PAGO - BITCOIN (TRUST WALLET)</h2>
+            <p>Para activar membresías, rangos exclusivos o acceso total al nodo, transfiera los fondos a su dirección de Trust Wallet autorizada:</p>
+            <div class="btc-box">bc1qep3ntxf6lz037ny04706u88jsl364p0ny4776s</div>
+            <p style="font-size: 0.7rem; color: #666;">* Protocolo descentralizado de alta seguridad. Cero intermediarios, anonimato total garantizado.</p>
+        </div>
+
+        <!-- COMUNICACIÓN EN TIEMPO REAL (Oculto hasta autenticar) -->
+        <div id="commPanel" class="panel hidden">
+            <h2>CANAL DE COMUNICACIÓN EFÍMERO</h2>
+            <div class="chat-box" id="chatBox">
+                <div class="msg"><span>Sistema:</span> Conexión segura establecida con éxito. Tráfico cifrado activo.</div>
+            </div>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="msgInput" placeholder="Enviar mensaje seguro..." style="margin-bottom:0;" autocomplete="off">
+                <button id="sendBtn" style="width: 100px; margin-bottom:0;">ENVIAR</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        Dio 3 — Extreme Privacy Network & Live Comms [MILITARY SHIELD ACTIVE]
+    </footer>
+
+    <!-- Script del fondo de puntos dinámicos -->
+    <script>
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        for(let i = 0; i < 60; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.4,
+                vy: (Math.random() - 0.5) * 0.4,
+                radius: Math.random() * 1.5
+            });
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff6633';
+            ctx.strokeStyle = '#00ff6611';
+
+            particles.forEach((p, index) => {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if(p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if(p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                for(let j = index + 1; j < particles.length; j++) {
+                    let p2 = particles[j];
+                    let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if(dist < 110) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+
+    <!-- Script de Socket.io y lógica de la red -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        const authPanel = document.getElementById('authPanel');
+        const commPanel = document.getElementById('commPanel');
+        const userBadge = document.getElementById('userBadge');
+        
+        const credentialInput = document.getElementById('credentialInput');
+        const authBtn = document.getElementById('authBtn');
+        
+        const chatBox = document.getElementById('chatBox');
+        const msgInput = document.getElementById('msgInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        authBtn.addEventListener('click', () => {
+            const val = credentialInput.value.trim();
+            if(val) {
+                socket.emit('auth_node', { credential: val });
+            }
+        });
+
+        socket.on('auth_success', (data) => {
+            authPanel.classList.add('hidden');
+            commPanel.classList.remove('hidden');
+            
+            userBadge.className = 'badge-vip';
+            userBadge.innerHTML = data.badge;
+        });
+
+        socket.on('auth_error', (data) => {
+            alert(data.message);
+        });
+
+        sendBtn.addEventListener('click', () => {
+            const text = msgInput.value.trim();
+            if(text) {
+                socket.emit('send_message', { sender: 'Operador DIO', text: text });
+                msgInput.value = '';
+            }
+        });
+
+        socket.on('receive_message', (data) => {
+            const div = document.createElement('div');
+            div.className = 'msg';
+            div.innerHTML = `<span>[${data.timestamp}] ${data.sender}:</span> ${data.text}`;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    </script>
+</body>
+</html>
