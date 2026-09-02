@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dio3.com — Extreme Privacy & Secure Network</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        body {
+            background-color: #020202;
+            color: #00ff66;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 15px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: #020202;
+        }
+        header {
+            border-bottom: 1px solid #00ff6633;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 2;
+            background: rgba(2, 2, 2, 0.85);
+            backdrop-filter: blur(5px);
+        }
+        .logo {
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: #00ff66;
+            text-shadow: 0 0 10px rgba(0,255,102,0.6);
+        }
+        .badge-vip {
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            padding: 4px 10px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            border-radius: 4px;
+            box-shadow: 0 0 12px rgba(255,215,0,0.7);
+            border: 1px solid #fff;
+            letter-spacing: 1px;
+        }
+        .badge-pending {
+            background: #151515;
+            color: #888;
+            border: 1px solid #333;
+            padding: 4px
