@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const https = require('https');
 
 const app = express();
 const server = http.createServer(app);
@@ -17,6 +18,56 @@ const registeredUsers = {};
 const userBalances = {};
 const activeSockets = {}; 
 const activeChatRooms = {};
+
+// Tu dirección real de Trust Wallet para recibir los pagos
+const FOUNDER_BTC_ADDRESS = 'bc1qep3ntxf6lz037ny04706u88jsl364p0ny4776s';
+
+// Función para verificar transacciones reales en la Blockchain usando la API pública de Mempool
+function checkRealBlockchainPayment(expectedBtcAmount, callback) {
+  const url = `https://mempool.space/api/address/${FOUNDER_BTC_ADDRESS}/txs`;
+  
+  https.get(url, (res) => {
+    let data = '';
+    res.on('data', (chunk) => { data += chunk; });
+    res.on('end', () => {
+      try {
+        const txs = JSON.parse(data);
+        if (!Array.isArray(txs) || txs.length === 0) {
+          return callback(false, 'No transactions found on this address yet.');
+        }
+
+        // Revisar las transacciones más recientes (últimas 5)
+        const recentTxs = txs.slice(0, 5);
+        let paymentFound = false;
+
+        for (let tx of recentTxs) {
+          // Verificar si la transacción está sin gastar o confirmada recientemente (últimos 30 minutos)
+          for (let vout of tx.vout) {
+            if (vout.scriptpubkey_address === FOUNDER_BTC_ADDRESS) {
+              const receivedBtc = vout.value / 100000000; // Convertir satoshis a BTC
+              // Permitir un margen mínimo de tolerancia por comisiones de red
+              if (receivedBtc >= (expectedBtcAmount * 0.95)) {
+                paymentFound = true;
+                break;
+              }
+            }
+          }
+          if (paymentFound) break;
+        }
+
+        if (paymentFound) {
+          callback(true, 'Payment successfully confirmed on the Bitcoin blockchain!');
+        } else {
+          callback(false, 'Payment not detected yet. Make sure you sent the exact BTC amount to the address.');
+        }
+      } catch (e) {
+        callback(false, 'Error parsing blockchain network response.');
+      }
+    });
+  }).on('error', () => {
+    callback(false, 'Could not connect to the Bitcoin network API.');
+  });
+}
 
 io.on('connection', (socket) => {
   console.log(`[SECURE NODE CONNECTED]: ${socket.id}`);
@@ -43,7 +94,7 @@ io.on('connection', (socket) => {
     }
 
     registeredUsers[username] = password;
-    userBalances[username] = (username === 'DIO0') ? 99999.0 : 10.0;
+    userBalances[username] = (username === 'DIO0') ? 99999.0 : 10.0; // Bono de bienvenida inicial
     
     socket.emit('register_success', { 
       message: `Node ${username} registered successfully! You can now log in.`,
@@ -92,30 +143,38 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Verification simulation for BTC Payments
+  // VERIFICACIÓN REAL EN LA BLOCKCHAIN DE BITCOIN
   socket.on('verify_btc_payment', (data) => {
-    let { username, packageType, btcAmount } = data;
-    if (!username || !userBalances[username]) {
+    let { username, packageType } = data;
+    if (!username || userBalances[username] === undefined) {
       socket.emit('auth_error', { message: 'Session error during payment check.' });
       return;
     }
 
-    // Simulated blockchain verification check against address bc1qep3ntxf6lz037ny04706u88jsl364p0ny4776s
-    console.log(`[BLOCKCHAIN CHECK] Verifying ${btcAmount} BTC for user ${username} (${packageType})...`);
-    
-    // Simulating successful network confirmation match
+    // Definir la cantidad exacta de BTC requerida según el paquete elegido
+    let requiredBtc = 0.000012; // 10 DIO
     let creditedDio = 10;
-    if (packageType.includes('50 DIO')) creditedDio = 50;
-    else if (packageType.includes('100 DIO')) creditedDio = 100;
-    else if (packageType.includes('500 DIO')) creditedDio = 500;
-    else if (packageType.includes('1,000 DIO')) creditedDio = 1000;
-    else if (packageType.includes('5,000 DIO')) creditedDio = 5000;
-    else if (packageType.includes('10,000 DIO')) creditedDio = 10000;
+    
+    if (packageType.includes('50 DIO')) { requiredBtc = 0.000055; creditedDio = 50; }
+    else if (packageType.includes('100 DIO')) { requiredBtc = 0.000088; creditedDio = 100; }
+    else if (packageType.includes('500 DIO')) { requiredBtc = 0.00038; creditedDio = 500; }
+    else if (packageType.includes('1,000 DIO')) { requiredBtc = 0.00072; creditedDio = 1000; }
+    else if (packageType.includes('5,000 DIO')) { requiredBtc = 0.0034; creditedDio = 5000; }
+    else if (packageType.includes('10,000 DIO')) { requiredBtc = 0.0066; creditedDio = 10000; }
 
-    userBalances[username] += creditedDio;
-    socket.emit('balance_updated', { 
-      newBalance: userBalances[username], 
-      message: `Payment verified! ${creditedDio} DIO credited to your wallet.` 
+    console.log(`[BLOCKCHAIN QUERY] Checking real transfer of ~${requiredBtc} BTC for user ${username}...`);
+
+    // Consulta real a la red Bitcoin
+    checkRealBlockchainPayment(requiredBtc, (isPaid, message) => {
+      if (isPaid) {
+        userBalances[username] += creditedDio;
+        socket.emit('balance_updated', { 
+          newBalance: userBalances[username], 
+          message: `Payment verified on blockchain! ${creditedDio} DIO credited to your wallet.` 
+        });
+      } else {
+        socket.emit('auth_error', { message: `Verification failed: ${message}` });
+      }
     });
   });
 
