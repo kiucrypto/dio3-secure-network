@@ -13,23 +13,27 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Base de datos temporal en memoria para usuarios registrados en el nodo
+// Memoria segura de usuarios registrados (Fundador: Lenox JG - 2026-09-02)
 const registeredUsers = {};
 
 io.on('connection', (socket) => {
   console.log(`[SECURE NODE CONNECTED]: ${socket.id}`);
 
-  // Registro de nuevo usuario (9 dígitos aleatorios + contraseña)
+  // Registro con validación para evitar duplicados
   socket.on('register_node', (data) => {
     const { username, password } = data;
     if (username && password) {
+      if (registeredUsers[username]) {
+        socket.emit('auth_error', { message: 'Error: User ID already exists. Cannot overwrite active credentials.' });
+        return;
+      }
       registeredUsers[username] = password;
       socket.emit('register_success', { 
-        message: 'Nodo de usuario creado con éxito. Guárdalo bien.',
+        message: 'Secure node account created successfully. Save your credentials.',
         username: username 
       });
     } else {
-      socket.emit('auth_error', { message: 'Faltan datos para el registro.' });
+      socket.emit('auth_error', { message: 'Missing data for registration.' });
     }
   });
 
@@ -37,17 +41,16 @@ io.on('connection', (socket) => {
   socket.on('auth_node', (data) => {
     const { username, password } = data;
     
-    // Llave maestra absoluta
+    // Llave maestra absoluta del fundador Lenox JG
     if (username === 'DIO197126' && password === '197126') {
       socket.emit('auth_success', {
         role: 'DIO_0',
         badge: '★ DIO_0 [VIP X EXTREME ✓]',
-        status: 'Authorized Master'
+        status: 'Authorized Master - Founder Lenox JG'
       });
       return;
     }
 
-    // Validación de usuarios registrados o clave maestra directa
     if (password === '197126' || (registeredUsers[username] && registeredUsers[username] === password)) {
       socket.emit('auth_success', {
         role: 'OPERATOR',
@@ -55,13 +58,13 @@ io.on('connection', (socket) => {
         status: 'Authorized Standard'
       });
     } else {
-      socket.emit('auth_error', { message: 'Credenciales inválidas o acceso denegado.' });
+      socket.emit('auth_error', { message: 'Invalid credentials or access denied.' });
     }
   });
 
   socket.on('send_message', (data) => {
     io.emit('receive_message', {
-      sender: data.sender || 'Operador DIO',
+      sender: data.sender || 'Operator',
       text: data.text,
       timestamp: new Date().toLocaleTimeString()
     });
