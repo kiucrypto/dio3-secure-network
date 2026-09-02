@@ -7,43 +7,61 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Servir archivos estáticos de forma segura
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Ruta comodín para asegurar entrega del frontend en dio3.com
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Núcleo de WebSockets para comunicación efímera y autenticación
+// Base de datos temporal en memoria para usuarios registrados en el nodo
+const registeredUsers = {};
+
 io.on('connection', (socket) => {
   console.log(`[SECURE NODE CONNECTED]: ${socket.id}`);
 
-  // Validación de Jerarquía y Credenciales
+  // Registro de nuevo usuario (9 dígitos aleatorios + contraseña)
+  socket.on('register_node', (data) => {
+    const { username, password } = data;
+    if (username && password) {
+      registeredUsers[username] = password;
+      socket.emit('register_success', { 
+        message: 'Nodo de usuario creado con éxito. Guárdalo bien.',
+        username: username 
+      });
+    } else {
+      socket.emit('auth_error', { message: 'Faltan datos para el registro.' });
+    }
+  });
+
+  // Autenticación de acceso
   socket.on('auth_node', (data) => {
-    const { credential } = data;
+    const { username, password } = data;
     
-    if (credential === '197126') {
+    // Llave maestra absoluta
+    if (username === 'DIO197126' && password === '197126') {
       socket.emit('auth_success', {
         role: 'DIO_0',
         badge: '★ DIO_0 [VIP X EXTREME ✓]',
         status: 'Authorized Master'
       });
-    } else if (credential && credential.length >= 4) {
+      return;
+    }
+
+    // Validación de usuarios registrados o clave maestra directa
+    if (password === '197126' || (registeredUsers[username] && registeredUsers[username] === password)) {
       socket.emit('auth_success', {
         role: 'OPERATOR',
         badge: 'SECURE OPERATOR [VERIFIED ✓]',
         status: 'Authorized Standard'
       });
     } else {
-      socket.emit('auth_error', { message: 'Credencial inválida o denegada por el protocolo de seguridad.' });
+      socket.emit('auth_error', { message: 'Credenciales inválidas o acceso denegado.' });
     }
   });
 
-  // Mensajería efímera de extremo a extremo
   socket.on('send_message', (data) => {
     io.emit('receive_message', {
-      sender: data.sender || 'Operador Anónimo',
+      sender: data.sender || 'Operador DIO',
       text: data.text,
       timestamp: new Date().toLocaleTimeString()
     });
