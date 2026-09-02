@@ -24,7 +24,7 @@ io.on('connection', (socket) => {
   socket.on('register_node', (data) => {
     let { customId, password } = data;
     if (!customId || password === undefined) {
-      socket.emit('auth_error', { message: 'Falta ID o contraseña numérica.' });
+      socket.emit('auth_error', { message: 'Missing ID or numeric password.' });
       return;
     }
 
@@ -32,13 +32,13 @@ io.on('connection', (socket) => {
     const numericId = parseInt(customId, 10);
 
     if (isNaN(numericId) || numericId < 0 || numericId > 1000000) {
-      socket.emit('auth_error', { message: 'Acceso Denegado: ID fuera de rango (0 a 1,000,000).' });
+      socket.emit('auth_error', { message: 'Access Denied: ID out of range (0 to 1,000,000).' });
       return;
     }
 
     const username = 'DIO' + numericId;
     if (registeredUsers[username]) {
-      socket.emit('auth_error', { message: 'Error: Este ID ya se encuentra registrado.' });
+      socket.emit('auth_error', { message: 'Error: This ID is already registered.' });
       return;
     }
 
@@ -46,7 +46,7 @@ io.on('connection', (socket) => {
     userBalances[username] = (username === 'DIO0') ? 99999.0 : 10.0;
     
     socket.emit('register_success', { 
-      message: `¡Nodo ${username} registrado con éxito! Ya puedes iniciar sesión.`,
+      message: `Node ${username} registered successfully! You can now log in.`,
       username: username
     });
   });
@@ -54,7 +54,7 @@ io.on('connection', (socket) => {
   socket.on('auth_node', (data) => {
     let { customId, password } = data;
     if (customId === undefined || password === undefined) {
-      socket.emit('auth_error', { message: 'Ingresa tu ID y contraseña numérica.' });
+      socket.emit('auth_error', { message: 'Please enter your ID and numeric password.' });
       return;
     }
 
@@ -88,8 +88,35 @@ io.on('connection', (socket) => {
         isAdmin: false
       });
     } else {
-      socket.emit('auth_error', { message: 'Credenciales inválidas o acceso denegado.' });
+      socket.emit('auth_error', { message: 'Invalid credentials or access denied.' });
     }
+  });
+
+  // Verification simulation for BTC Payments
+  socket.on('verify_btc_payment', (data) => {
+    let { username, packageType, btcAmount } = data;
+    if (!username || !userBalances[username]) {
+      socket.emit('auth_error', { message: 'Session error during payment check.' });
+      return;
+    }
+
+    // Simulated blockchain verification check against address bc1qep3ntxf6lz037ny04706u88jsl364p0ny4776s
+    console.log(`[BLOCKCHAIN CHECK] Verifying ${btcAmount} BTC for user ${username} (${packageType})...`);
+    
+    // Simulating successful network confirmation match
+    let creditedDio = 10;
+    if (packageType.includes('50 DIO')) creditedDio = 50;
+    else if (packageType.includes('100 DIO')) creditedDio = 100;
+    else if (packageType.includes('500 DIO')) creditedDio = 500;
+    else if (packageType.includes('1,000 DIO')) creditedDio = 1000;
+    else if (packageType.includes('5,000 DIO')) creditedDio = 5000;
+    else if (packageType.includes('10,000 DIO')) creditedDio = 10000;
+
+    userBalances[username] += creditedDio;
+    socket.emit('balance_updated', { 
+      newBalance: userBalances[username], 
+      message: `Payment verified! ${creditedDio} DIO credited to your wallet.` 
+    });
   });
 
   socket.on('admin_credit_balance', (data) => {
@@ -103,17 +130,17 @@ io.on('connection', (socket) => {
         if (userBalances[targetFull] === undefined) userBalances[targetFull] = 0;
         userBalances[targetFull] += addAmount;
         
-        socket.emit('admin_action_success', { message: `Se acreditaron ${addAmount} DIO a ${targetFull}.` });
+        socket.emit('admin_action_success', { message: `Credited ${addAmount} DIO to ${targetFull}.` });
         
         const targetSocket = activeSockets[targetFull];
         if (targetSocket) {
-          io.to(targetSocket).emit('balance_updated', { newBalance: userBalances[targetFull], message: `El Fundador acreditó ${addAmount} DIO a tu billetera.` });
+          io.to(targetSocket).emit('balance_updated', { newBalance: userBalances[targetFull], message: `The Founder credited ${addAmount} DIO to your wallet.` });
         }
       } else {
-        socket.emit('auth_error', { message: 'El ID de usuario destino no existe.' });
+        socket.emit('auth_error', { message: 'Target user ID does not exist.' });
       }
     } else {
-      socket.emit('auth_error', { message: 'No autorizado: Se requieren privilegios de Fundador.' });
+      socket.emit('auth_error', { message: 'Unauthorized: Founder privileges required.' });
     }
   });
 
@@ -121,7 +148,7 @@ io.on('connection', (socket) => {
     const { username } = data;
     if (username && username !== 'DIO0' && userBalances[username] !== undefined) {
       userBalances[username] = Math.max(0, userBalances[username] - 3.0);
-      socket.emit('balance_updated', { newBalance: userBalances[username], message: 'Alerta de seguridad: -3 DIO descontados por salir de la app/pestaña.' });
+      socket.emit('balance_updated', { newBalance: userBalances[username], message: 'Security Alert: -3 DIO deducted for leaving the app/tab.' });
     }
   });
 
@@ -134,11 +161,11 @@ io.on('connection', (socket) => {
     if (targetSocketId) {
       io.to(targetSocketId).emit('incoming_connection_request', { 
         sender: senderUser, 
-        message: messageText || 'Solicitud de conexión segura directa.' 
+        message: messageText || 'Direct secure connection request.' 
       });
-      socket.emit('request_sent_success', { message: `Solicitud transmitida a ${fullTarget}` });
+      socket.emit('request_sent_success', { message: `Request transmitted to ${fullTarget}` });
     } else {
-      socket.emit('auth_error', { message: 'El operador destino está desconectado.' });
+      socket.emit('auth_error', { message: 'Target operator is offline.' });
     }
   });
 
@@ -153,10 +180,10 @@ io.on('connection', (socket) => {
     if (activeChatRooms[code]) {
       activeChatRooms[code].participants.push(username);
       socket.join(code);
-      io.to(code).emit('chat_joined', { message: `Operador ${username} se ha unido a la sala.` });
+      io.to(code).emit('chat_joined', { message: `Operator ${username} has joined the room.` });
       socket.emit('connection_success', { code: code });
     } else {
-      socket.emit('auth_error', { message: 'Código de sala inválido o expirado.' });
+      socket.emit('auth_error', { message: 'Invalid or expired room code.' });
     }
   });
 
@@ -170,7 +197,7 @@ io.on('connection', (socket) => {
 
   socket.on('send_post', (data) => {
     io.emit('receive_post', {
-      sender: data.sender || 'Operador',
+      sender: data.sender || 'Operator',
       text: data.text,
       timestamp: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString()
     });
