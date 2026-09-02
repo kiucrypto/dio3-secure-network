@@ -118,7 +118,7 @@
             margin-bottom: 0;
             background: transparent;
         }
-        input, button {
+        input, select, textarea, button {
             width: 100%;
             background: #000;
             border: 1px solid #00ff6666;
@@ -128,6 +128,9 @@
             border-radius: 4px;
             outline: none;
             margin-bottom: 10px;
+        }
+        select {
+            cursor: pointer;
         }
         button {
             background: #00ff66;
@@ -161,32 +164,43 @@
             margin-bottom: 10px;
             display: none;
         }
-        .chat-box {
-            height: 180px;
+        /* Estilos para el Muro de Publicaciones tipo Feed */
+        .feed-box {
+            max-height: 250px;
             background: #000;
             border: 1px solid #00ff6633;
             border-radius: 4px;
             padding: 10px;
             overflow-y: auto;
             margin-bottom: 10px;
-            font-size: 0.8rem;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 10px;
         }
-        .msg {
-            border-left: 2px solid #00ff66;
-            padding-left: 6px;
-            color: #ccc;
+        .post-card {
+            background: #0b120e;
+            border: 1px solid #00ff6644;
+            padding: 10px;
+            border-radius: 4px;
         }
-        .msg span {
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
             color: #00ff66;
-            font-weight: bold;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #00ff6622;
+            padding-bottom: 3px;
+        }
+        .post-body {
+            font-size: 0.8rem;
+            color: #ddd;
+            word-break: break-word;
         }
         .btc-box {
             background: #000;
             border: 1px dashed #ffd700;
-            padding: 12px;
+            padding: 10px;
             word-break: break-all;
             font-size: 0.75rem;
             color: #ffd700;
@@ -240,23 +254,35 @@
             </div>
         </div>
 
-        <!-- BITCOIN PAYMENT GATEWAY -->
+        <!-- BITCOIN PAYMENT GATEWAY WITH OPTIONS -->
         <div id="paymentPanel" class="panel">
             <h2>BITCOIN PAYMENT GATEWAY (TRUST WALLET)</h2>
-            <p>To activate memberships, exclusive privileges or full network access, transfer funds to the authorized Trust Wallet address:</p>
+            <p>Select your access level or membership plan to activate:</p>
+            
+            <select id="membershipSelect">
+                <option value="Standard Operator Access - 0.001 BTC">Standard Operator Access (0.001 BTC)</option>
+                <option value="VIP Node Privilege - 0.005 BTC">VIP Node Privilege (0.005 BTC)</option>
+                <option value="Full Network Lifetime - 0.012 BTC">Full Network Lifetime (0.012 BTC)</option>
+            </select>
+
             <div class="btc-box">bc1qep3ntxf6lz037ny04706u88jsl364p0ny4776s</div>
-            <p style="font-size: 0.7rem; color: #666;">* Decentralized high-security protocol. Zero intermediaries, total privacy guaranteed.</p>
+            <button id="payConfirmBtn" style="background:#ffd700; color:#000;">CONFIRM BTC PAYMENT TRANSFER</button>
+            <p style="font-size: 0.65rem; color: #666; margin-top:5px;">* Send exact amount to the Trust Wallet address. Zero intermediaries.</p>
         </div>
 
-        <!-- REAL-TIME EPHEMERAL COMM CHANNEL -->
+        <!-- SOCIAL FEED & PUBLICATION WALL (Visible after Auth) -->
         <div id="commPanel" class="panel hidden">
-            <h2>EPHEMERAL COMMUNICATION CHANNEL</h2>
-            <div class="chat-box" id="chatBox">
-                <div class="msg"><span>System:</span> Secure connection established successfully. Encrypted traffic active.</div>
-            </div>
-            <div style="display: flex; gap: 5px;">
-                <input type="text" id="msgInput" placeholder="Send secure message..." style="margin-bottom:0;" autocomplete="off">
-                <button id="sendBtn" style="width: 100px; margin-bottom:0;">SEND</button>
+            <h2>NETWORK FEED & PUBLICATION WALL</h2>
+            <p>Publish updates, notes or encrypted bulletins to the community feed:</p>
+            
+            <textarea id="postInput" placeholder="What's on your secure node today?..." rows="2" style="resize:none;" autocomplete="off"></textarea>
+            <button id="postBtn" style="margin-bottom: 10px;">PUBLISH TO FEED</button>
+
+            <div class="feed-box" id="feedBox">
+                <div class="post-card">
+                    <div class="post-header"><span>Founder Lenox JG</span><span>2026-09-02</span></div>
+                    <div class="post-body">Welcome to dio3.com secure network feed. All transmissions are active.</div>
+                </div>
             </div>
         </div>
     </main>
@@ -338,21 +364,22 @@
         const credText = document.getElementById('credText');
         const copyCredBtn = document.getElementById('copyCredBtn');
         
-        const chatBox = document.getElementById('chatBox');
-        const msgInput = document.getElementById('msgInput');
-        const sendBtn = document.getElementById('sendBtn');
+        const membershipSelect = document.getElementById('membershipSelect');
+        const payConfirmBtn = document.getElementById('payConfirmBtn');
 
-        let lastGeneratedUser = '';
+        const feedBox = document.getElementById('feedBox');
+        const postInput = document.getElementById('postInput');
+        const postBtn = document.getElementById('postBtn');
 
-        // Generate unique 9-digit ID safely once
+        let loggedUser = 'Operator';
+
         registerBtn.addEventListener('click', () => {
             const random9Digits = Math.floor(100000000 + Math.random() * 900000000).toString();
             userInput.value = random9Digits;
             const password = prompt('New unique node generated (DIO' + random9Digits + '). Please enter your secure password:');
             
             if(password) {
-                lastGeneratedUser = 'DIO' + random9Digits;
-                socket.emit('register_node', { username: lastGeneratedUser, password: password });
+                socket.emit('register_node', { username: 'DIO' + random9Digits, password: password });
             }
         });
 
@@ -374,8 +401,8 @@
             const password = passInput.value.trim();
             
             if(rawUser && password) {
-                const fullUsername = rawUser.startsWith('DIO') ? rawUser : 'DIO' + rawUser;
-                socket.emit('auth_node', { username: fullUsername, password: password });
+                loggedUser = rawUser.startsWith('DIO') ? rawUser : 'DIO' + rawUser;
+                socket.emit('auth_node', { username: loggedUser, password: password });
             } else {
                 alert('Please enter your identifier and password.');
             }
@@ -392,20 +419,27 @@
             alert(data.message);
         });
 
-        sendBtn.addEventListener('click', () => {
-            const text = msgInput.value.trim();
+        payConfirmBtn.addEventListener('click', () => {
+            const selectedPlan = membershipSelect.value;
+            alert('Payment Order Generated for: ' + selectedPlan + '\nPlease send the exact BTC amount to the Trust Wallet address displayed above. Access will propagate upon blockchain confirmation.');
+        });
+
+        postBtn.addEventListener('click', () => {
+            const text = postInput.value.trim();
             if(text) {
-                socket.emit('send_message', { sender: 'Operator DIO', text: text });
-                msgInput.value = '';
+                socket.emit('send_post', { sender: loggedUser, text: text });
+                postInput.value = '';
             }
         });
 
-        socket.on('receive_message', (data) => {
+        socket.on('receive_post', (data) => {
             const div = document.createElement('div');
-            div.className = 'msg';
-            div.innerHTML = `<span>[${data.timestamp}] ${data.sender}:</span> ${data.text}`;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
+            div.className = 'post-card';
+            div.innerHTML = `
+                <div class="post-header"><span>${data.sender}</span><span>${data.timestamp}</span></div>
+                <div class="post-body">${data.text}</div>
+            `;
+            feedBox.prepend(div);
         });
     </script>
 </body>
