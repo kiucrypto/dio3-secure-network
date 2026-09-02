@@ -22,50 +22,34 @@
             position: relative;
             overflow-x: hidden;
         }
-        #bgCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: #020202;
-        }
         header {
             border-bottom: 1px solid #00ff6633;
             padding-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            z-index: 2;
-            background: rgba(2, 2, 2, 0.85);
-            backdrop-filter: blur(5px);
         }
         .logo {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
             letter-spacing: 2px;
             color: #00ff66;
-            text-shadow: 0 0 10px rgba(0,255,102,0.6);
+        }
+        .balance-display {
+            background: #001a0a;
+            border: 1px solid #00ff66;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            color: #00ff66;
+            border-radius: 4px;
         }
         .badge-vip {
             background: linear-gradient(135deg, #ffd700, #ff8c00);
             color: #000;
-            padding: 5px 12px;
-            font-size: 0.75rem;
+            padding: 4px 10px;
+            font-size: 0.7rem;
             font-weight: bold;
             border-radius: 4px;
-            box-shadow: 0 0 15px rgba(255,215,0,0.8);
-            border: 1px solid #fff;
-            letter-spacing: 1px;
-        }
-        .badge-pending {
-            background: #151515;
-            color: #888;
-            border: 1px solid #333;
-            padding: 4px 8px;
-            font-size: 0.65rem;
-            border-radius: 3px;
         }
         main {
             max-width: 650px;
@@ -74,25 +58,23 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            z-index: 2;
+            padding: 15px 0;
         }
         .panel {
-            background: rgba(8, 8, 8, 0.92);
+            background: rgba(8, 8, 8, 0.95);
             border: 1px solid #00ff6644;
             padding: 20px;
             border-radius: 6px;
-            box-shadow: 0 0 20px rgba(0,255,102,0.08);
-            backdrop-filter: blur(5px);
         }
         h2 {
-            font-size: 1rem;
+            font-size: 0.95rem;
             margin-bottom: 10px;
             color: #fff;
             border-bottom: 1px dashed #00ff6633;
             padding-bottom: 5px;
         }
         p {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #888;
             margin-bottom: 10px;
             line-height: 1.4;
@@ -111,7 +93,7 @@
             color: #00ff66;
             font-weight: bold;
             border-right: 1px solid #00ff6666;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         .input-group input {
             border: none;
@@ -124,49 +106,40 @@
             border: 1px solid #00ff6666;
             color: #00ff66;
             padding: 10px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             border-radius: 4px;
             outline: none;
             margin-bottom: 10px;
-        }
-        select {
-            cursor: pointer;
         }
         button {
             background: #00ff66;
             color: #000;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.2s;
             letter-spacing: 1px;
         }
         button:hover {
             background: #00cc52;
-            box-shadow: 0 0 12px rgba(0,255,102,0.5);
         }
         .btn-alt {
             background: transparent;
             color: #00ff66;
             border: 1px dashed #00ff6666;
             font-size: 0.75rem;
-            margin-top: 5px;
         }
-        .btn-alt:hover {
-            background: #00ff6611;
-        }
-        .credentials-box {
-            background: #000;
-            border: 1px solid #00ff66;
-            padding: 10px;
-            font-size: 0.75rem;
-            color: #00ff66;
+        .timer-box {
+            background: #200;
+            border: 1px solid #ff3333;
+            color: #ff6666;
+            padding: 8px;
+            text-align: center;
+            font-size: 0.8rem;
             border-radius: 4px;
             margin-bottom: 10px;
-            display: none;
+            font-weight: bold;
         }
-        /* Estilos para el Muro de Publicaciones tipo Feed */
-        .feed-box {
-            max-height: 250px;
+        .feed-box, .chat-box {
+            height: 180px;
             background: #000;
             border: 1px solid #00ff6633;
             border-radius: 4px;
@@ -175,243 +148,244 @@
             margin-bottom: 10px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
-        .post-card {
+        .post-card, .msg {
             background: #0b120e;
             border: 1px solid #00ff6644;
-            padding: 10px;
+            padding: 8px;
             border-radius: 4px;
+            font-size: 0.75rem;
+            color: #ccc;
         }
-        .post-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.7rem;
+        .msg span, .post-header {
             color: #00ff66;
-            margin-bottom: 5px;
-            border-bottom: 1px solid #00ff6622;
-            padding-bottom: 3px;
-        }
-        .post-body {
-            font-size: 0.8rem;
-            color: #ddd;
-            word-break: break-word;
+            font-weight: bold;
         }
         .btc-box {
             background: #000;
             border: 1px dashed #ffd700;
             padding: 10px;
             word-break: break-all;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #ffd700;
             text-align: center;
             border-radius: 4px;
             margin-bottom: 10px;
-            box-shadow: inset 0 0 10px rgba(255,215,0,0.1);
         }
         .hidden {
             display: none !important;
         }
         footer {
             text-align: center;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: #555;
             border-top: 1px solid #00ff6622;
             padding-top: 10px;
-            z-index: 2;
-            background: rgba(2, 2, 2, 0.85);
         }
     </style>
 </head>
 <body>
 
-    <canvas id="bgCanvas"></canvas>
-
     <header>
         <div class="logo">DIO3.COM</div>
-        <div id="userBadge" class="badge-pending">🔒 PENDING AUTH</div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <div id="balanceDisplay" class="balance-display hidden">Saldo: 10 DIO</div>
+            <div id="userBadge" class="balance-display" style="background:#151515; color:#888; border-color:#333;">LOCKED</div>
+        </div>
     </header>
 
     <main>
-        <!-- AUTHENTICATION PANEL -->
+        <!-- 1. SALDO, PACKS Y RECARGAS DE BITCOIN (PRIMERO EN LA VISTA) -->
+        <div class="panel" style="border-color: #ffd700;">
+            <h2 style="color: #ffd700;">★ WALLET BALANCES & VIP PACKS (FOUNDER WALLET)</h2>
+            <select id="membershipSelect">
+                <option value="10 DIO">10 DIO — $1.10 USD (Standard Starter)</option>
+                <option value="50 DIO">50 DIO — $4.99 USD (Active Operator)</option>
+                <option value="100 DIO">100 DIO — $7.99 USD (Secure Pro)</option>
+                <option value="10,000 DIO">10,000 DIO — $599 USD (VIP Enterprise ✓)</option>
+            </select>
+            <div class="btc-box">bc1qep3ntxf6lz037ny04706u88jsl364p0ny4776s</div>
+            <p style="text-align: center; color: #ffd700;">Send exact Bitcoin to founder wallet (DIO 0) for instant balance updates.</p>
+        </div>
+
+        <!-- AUTHENTICATION & REGISTRATION -->
         <div id="authPanel" class="panel">
-            <h2>SECURE CORE AUTHENTICATION</h2>
-            <p>Enter your identifier (with default DIO prefix) and operator password.</p>
-            
+            <h2>SECURE NODE LOGIN & REGISTRATION (DIO 0 to 1,000,000)</h2>
             <div class="input-group">
                 <span class="prefix">DIO</span>
-                <input type="text" id="userInput" placeholder="e.g. 197126 or 9-digit ID" autocomplete="off">
+                <input type="number" id="userInput" placeholder="e.g. 0, 1, 777..." min="0" max="1000000" inputmode="numeric">
             </div>
-            
-            <input type="password" id="passInput" placeholder="Access password..." autocomplete="off">
-            
-            <button id="authBtn">ACCESS CORE</button>
-            <button id="registerBtn" class="btn-alt">+ NEW USER (GENERATE UNIQUE 9-DIGIT ID)</button>
-            
-            <div id="credOutputBox" class="credentials-box">
-                <p id="credText" style="margin-bottom: 5px; color: #fff;"></p>
-                <button id="copyCredBtn" style="background:#003311; color:#00ff66; border:1px solid #00ff66; padding:5px; font-size:0.7rem;">COPY UNIQUE CREDENTIALS</button>
-            </div>
+            <input type="number" id="passInput" placeholder="Numeric password..." inputmode="numeric">
+            <button id="authBtn">ACCESS NODE</button>
+            <button id="registerBtn" class="btn-alt">+ REGISTER CHOSEN ID FIRST (+10 DIO)</button>
         </div>
 
-        <!-- BITCOIN PAYMENT GATEWAY WITH OPTIONS -->
-        <div id="paymentPanel" class="panel">
-            <h2>BITCOIN PAYMENT GATEWAY (TRUST WALLET)</h2>
-            <p>Select your access level or membership plan to activate:</p>
-            
-            <select id="membershipSelect">
-                <option value="Standard Operator Access - 0.001 BTC">Standard Operator Access (0.001 BTC)</option>
-                <option value="VIP Node Privilege - 0.005 BTC">VIP Node Privilege (0.005 BTC)</option>
-                <option value="Full Network Lifetime - 0.012 BTC">Full Network Lifetime (0.012 BTC)</option>
-            </select>
-
-            <div class="btc-box">bc1qep3ntxf6lz037ny04706u88jsl364p0ny4776s</div>
-            <button id="payConfirmBtn" style="background:#ffd700; color:#000;">CONFIRM BTC PAYMENT TRANSFER</button>
-            <p style="font-size: 0.65rem; color: #666; margin-top:5px;">* Send exact amount to the Trust Wallet address. Zero intermediaries.</p>
+        <!-- FOUNDER BALANCE CONTROLLER (DIO 0) -->
+        <div id="adminPanel" class="panel hidden" style="border-color: #ffd700;">
+            <h2 style="color: #ffd700;">★ FOUNDER CONTROLLER (DIO 0 ✓ [SUPREME ADMIN])</h2>
+            <div class="input-group" style="border-color: #ffd700;">
+                <span class="prefix" style="background: #332200; color: #ffd700;">DIO</span>
+                <input type="number" id="adminTargetUser" placeholder="Target User ID (e.g. 777)..." style="color: #ffd700;" min="0" max="1000000" inputmode="numeric">
+            </div>
+            <input type="number" id="adminAmountInput" placeholder="Amount of DIO to credit..." style="border-color: #ffd700; color: #ffd700;">
+            <button id="adminSendBalanceBtn" style="background: #ffd700; color: #000;">CREDIT DIO TO USER</button>
         </div>
 
-        <!-- SOCIAL FEED & PUBLICATION WALL (Visible after Auth) -->
+        <!-- SECURE COMMUNICATOR & MESSAGING -->
         <div id="commPanel" class="panel hidden">
-            <h2>NETWORK FEED & PUBLICATION WALL</h2>
-            <p>Publish updates, notes or encrypted bulletins to the community feed:</p>
+            <h2>SECURE USER-TO-USER COMM & MESSAGING</h2>
             
-            <textarea id="postInput" placeholder="What's on your secure node today?..." rows="2" style="resize:none;" autocomplete="off"></textarea>
-            <button id="postBtn" style="margin-bottom: 10px;">PUBLISH TO FEED</button>
+            <div style="margin-bottom: 12px; border-bottom: 1px dashed #00ff6633; padding-bottom: 10px;">
+                <p>Send Direct Request & Message to Target User ID:</p>
+                <div class="input-group" style="margin-bottom: 8px;">
+                    <button class="prefix" style="border:none; cursor:default; width:auto;">DIO</button>
+                    <input type="number" id="targetRequestInput" placeholder="e.g. 777..." style="margin-bottom:0; border:none;" min="0" max="1000000" inputmode="numeric">
+                </div>
+                <textarea id="targetMessageInput" placeholder="Enter secure message..." rows="2" style="resize:none; margin-bottom:8px;"></textarea>
+                <button id="sendRequestBtn" style="font-size:0.75rem;">SEND REQUEST & MESSAGE</button>
+            </div>
 
-            <div class="feed-box" id="feedBox">
-                <div class="post-card">
-                    <div class="post-header"><span>Founder Lenox JG</span><span>2026-09-02</span></div>
-                    <div class="post-body">Welcome to dio3.com secure network feed. All transmissions are active.</div>
+            <div style="margin-bottom: 12px;">
+                <button id="generateCodeBtn" style="background:#003311; color:#00ff66; border:1px solid #00ff66; font-size:0.75rem;">GENERATE ROOM CODE</button>
+                <p id="generatedCodeDisplay" style="color:#ffd700; font-weight:bold; margin-top:5px;"></p>
+                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <input type="text" id="chatCodeInput" placeholder="Enter room code..." style="margin-bottom:0;">
+                    <button id="connectCodeBtn" style="width: 110px; margin-bottom:0; font-size:0.75rem;">CONNECT</button>
                 </div>
             </div>
+
+            <div id="timerContainer" class="timer-box hidden">
+                CHAT SELF-DESTRUCT TIMER: <span id="timeCountdown">01:30</span>
+            </div>
+
+            <div class="chat-box" id="chatBox">
+                <div class="msg"><span>System:</span> Connect to a room code or accept an incoming request to start.</div>
+            </div>
+
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="msgInput" placeholder="Secure message..." style="margin-bottom:0;">
+                <button id="sendBtn" style="width: 80px; margin-bottom:0;">SEND</button>
+            </div>
+        </div>
+
+        <!-- SOCIAL FEED -->
+        <div id="socialPanel" class="panel hidden">
+            <h2>COMMUNITY FEED</h2>
+            <textarea id="postInput" placeholder="Publish bulletin..." rows="2" style="resize:none;"></textarea>
+            <button id="postBtn" style="margin-bottom: 10px;">PUBLISH</button>
+            <div class="feed-box" id="feedBox"></div>
+        </div>
+
+        <!-- SYSTEM MANUAL & PRIVACY POLICIES -->
+        <div class="panel">
+            <h2>★ SYSTEM MANUAL & PRIVACY PROTOCOLS</h2>
+            <p style="color: #00ff66;"><strong>Founder & Supreme Administrator:</strong> DIO 0 (Lenox JG)</p>
+            <p><strong>How to Use:</strong><br>
+            1. Enter your numeric ID (0 to 1,000,000) and numeric password.<br>
+            2. Click <strong>REGISTER CHOSEN ID FIRST</strong> to claim your node.<br>
+            3. <strong>Privacy Penalty:</strong> Leaving the app or switching tabs deducts <strong>3 DIO</strong> (Except for DIO 0).<br>
+            4. <strong>Chat Timer:</strong> Active chat rooms feature a strict 90-second self-destruct countdown timer.<br>
+            5. <strong>Real Payments:</strong> Send Bitcoin directly to the founder wallet above to fund packs.</p>
         </div>
     </main>
 
     <footer>
-        Dio 3 — High Privacy Network & Live Comms [Founder: Lenox JG | 2026-09-02]
+        Dio 3 — High Privacy Network [Founder: Lenox JG | Node: DIO 0 ✓]
     </footer>
 
-    <!-- Background Animation Script -->
-    <script>
-        const canvas = document.getElementById('bgCanvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
-
-        for(let i = 0; i < 60; i++) {
-            particles.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                vx: (Math.random() - 0.5) * 0.4,
-                vy: (Math.random() - 0.5) * 0.4,
-                radius: Math.random() * 1.5
-            });
-        }
-
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#00ff6633';
-            ctx.strokeStyle = '#00ff6611';
-
-            particles.forEach((p, index) => {
-                p.x += p.vx;
-                p.y += p.vy;
-
-                if(p.x < 0 || p.x > canvas.width) p.vx *= -1;
-                if(p.y < 0 || p.y > canvas.height) p.vy *= -1;
-
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fill();
-
-                for(let j = index + 1; j < particles.length; j++) {
-                    let p2 = particles[j];
-                    let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
-                    if(dist < 110) {
-                        ctx.beginPath();
-                        ctx.moveTo(p.x, p.y);
-                        ctx.lineTo(p2.x, p2.y);
-                        ctx.stroke();
-                    }
-                }
-            });
-            requestAnimationFrame(animate);
-        }
-        animate();
-    </script>
-
-    <!-- Socket.io & Logic Script -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
 
+        let loggedUser = '';
+        let userBalance = 10;
+        let isUserVip = false;
+        let currentRoomCode = '';
+        let countdownInterval = null;
+
         const authPanel = document.getElementById('authPanel');
+        const adminPanel = document.getElementById('adminPanel');
         const commPanel = document.getElementById('commPanel');
-        const userBadge = document.getElementById('userBadge');
+        const socialPanel = document.getElementById('socialPanel');
         
         const userInput = document.getElementById('userInput');
         const passInput = document.getElementById('passInput');
         const authBtn = document.getElementById('authBtn');
         const registerBtn = document.getElementById('registerBtn');
+        const userBadge = document.getElementById('userBadge');
+        const balanceDisplay = document.getElementById('balanceDisplay');
         
-        const credOutputBox = document.getElementById('credOutputBox');
-        const credText = document.getElementById('credText');
-        const copyCredBtn = document.getElementById('copyCredBtn');
-        
-        const membershipSelect = document.getElementById('membershipSelect');
-        const payConfirmBtn = document.getElementById('payConfirmBtn');
+        const adminTargetUser = document.getElementById('adminTargetUser');
+        const adminAmountInput = document.getElementById('adminAmountInput');
+        const adminSendBalanceBtn = document.getElementById('adminSendBalanceBtn');
+
+        const targetRequestInput = document.getElementById('targetRequestInput');
+        const targetMessageInput = document.getElementById('targetMessageInput');
+        const sendRequestBtn = document.getElementById('sendRequestBtn');
+
+        const generateCodeBtn = document.getElementById('generateCodeBtn');
+        const generatedCodeDisplay = document.getElementById('generatedCodeDisplay');
+        const chatCodeInput = document.getElementById('chatCodeInput');
+        const connectCodeBtn = document.getElementById('connectCodeBtn');
+
+        const timerContainer = document.getElementById('timerContainer');
+        const timeCountdown = document.getElementById('timeCountdown');
+
+        const chatBox = document.getElementById('chatBox');
+        const msgInput = document.getElementById('msgInput');
+        const sendBtn = document.getElementById('sendBtn');
 
         const feedBox = document.getElementById('feedBox');
         const postInput = document.getElementById('postInput');
         const postBtn = document.getElementById('postBtn');
 
-        let loggedUser = 'Operator';
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && loggedUser && loggedUser !== 'DIO0') {
+                socket.emit('penalize_session_exit', { username: loggedUser });
+            }
+        });
 
         registerBtn.addEventListener('click', () => {
-            const random9Digits = Math.floor(100000000 + Math.random() * 900000000).toString();
-            userInput.value = random9Digits;
-            const password = prompt('New unique node generated (DIO' + random9Digits + '). Please enter your secure password:');
-            
-            if(password) {
-                socket.emit('register_node', { username: 'DIO' + random9Digits, password: password });
+            const rawId = userInput.value.trim();
+            const password = passInput.value.trim();
+            if(rawId === '' || !password) {
+                alert('Please enter your numeric ID (0 or higher) and password.');
+                return;
             }
+            socket.emit('register_node', { customId: rawId, password: password });
         });
 
         socket.on('register_success', (data) => {
-            credText.innerHTML = `Saved ID: <b>${data.username}</b><br>Copy your unique credentials before leaving.`;
-            credOutputBox.style.display = 'block';
-        });
-
-        copyCredBtn.addEventListener('click', () => {
-            if(userInput.value) {
-                const fullId = userInput.value.startsWith('DIO') ? userInput.value : 'DIO' + userInput.value;
-                navigator.clipboard.writeText(fullId);
-                alert('User ID (' + fullId + ') copied to clipboard!');
-            }
+            alert(data.message);
         });
 
         authBtn.addEventListener('click', () => {
-            const rawUser = userInput.value.trim();
-            const password = passInput.value.trim();
-            
-            if(rawUser && password) {
-                loggedUser = rawUser.startsWith('DIO') ? rawUser : 'DIO' + rawUser;
-                socket.emit('auth_node', { username: loggedUser, password: password });
+            const rawId = userInput.value.trim();
+            const pass = passInput.value.trim();
+            if(rawId !== '' && pass) {
+                loggedUser = 'DIO' + rawId;
+                socket.emit('auth_node', { customId: rawId, password: pass });
             } else {
-                alert('Please enter your identifier and password.');
+                alert('Enter your ID number and numeric password.');
             }
         });
 
         socket.on('auth_success', (data) => {
             authPanel.classList.add('hidden');
             commPanel.classList.remove('hidden');
-            userBadge.className = 'badge-vip';
+            socialPanel.classList.remove('hidden');
+            
+            userBalance = data.balance;
+            isUserVip = data.isVip;
+            
+            if (data.isAdmin) {
+                adminPanel.classList.remove('hidden');
+            }
+            
+            balanceDisplay.classList.remove('hidden');
+            balanceDisplay.innerHTML = `Saldo: ${userBalance} DIO`;
+            userBadge.className = data.isVip ? 'badge-vip' : 'balance-display';
             userBadge.innerHTML = data.badge;
         });
 
@@ -419,15 +393,114 @@
             alert(data.message);
         });
 
-        payConfirmBtn.addEventListener('click', () => {
-            const selectedPlan = membershipSelect.value;
-            alert('Payment Order Generated for: ' + selectedPlan + '\nPlease send the exact BTC amount to the Trust Wallet address displayed above. Access will propagate upon blockchain confirmation.');
+        adminSendBalanceBtn.addEventListener('click', () => {
+            const target = adminTargetUser.value.trim();
+            const amount = adminAmountInput.value.trim();
+            if(target !== '' && amount) {
+                socket.emit('admin_credit_balance', { adminUser: loggedUser, targetUser: target, amount: amount });
+                adminTargetUser.value = '';
+                adminAmountInput.value = '';
+            } else {
+                alert('Enter target user ID and amount.');
+            }
+        });
+
+        socket.on('balance_updated', (data) => {
+            userBalance = data.newBalance;
+            balanceDisplay.innerHTML = `Saldo: ${userBalance} DIO`;
+            alert(data.message);
+        });
+
+        sendRequestBtn.addEventListener('click', () => {
+            const target = targetRequestInput.value.trim();
+            const msg = targetMessageInput.value.trim();
+            if(target !== '') {
+                socket.emit('send_connection_request', { targetUser: target, senderUser: loggedUser, messageText: msg });
+                alert('Connection request and secure message transmitted.');
+                targetRequestInput.value = '';
+                targetMessageInput.value = '';
+            } else {
+                alert('Enter a target user ID.');
+            }
+        });
+
+        socket.on('incoming_connection_request', (data) => {
+            const accept = confirm(`Incoming connection request & message from ${data.sender}:\n"${data.message}"\n\nAccept and open secure channel?`);
+            if(accept) {
+                alert('Request accepted. Generate or enter a shared room code to begin secure chat.');
+            }
+        });
+
+        generateCodeBtn.addEventListener('click', () => {
+            socket.emit('generate_chat_code', { username: loggedUser });
+        });
+
+        socket.on('chat_code_generated', (data) => {
+            generatedCodeDisplay.innerHTML = `Room Code: ${data.code}`;
+        });
+
+        connectCodeBtn.addEventListener('click', () => {
+            const code = chatCodeInput.value.trim();
+            if(code) {
+                socket.emit('connect_with_code', { code: code, username: loggedUser });
+            } else {
+                alert('Enter a valid room code.');
+            }
+        });
+
+        socket.on('connection_success', (data) => {
+            currentRoomCode = data.code;
+            chatBox.innerHTML += `<div class="msg"><span>System:</span> Connected to secure room ${data.code}</div>`;
+            if (!isUserVip) {
+                startSelfDestructTimer();
+            }
+        });
+
+        socket.on('chat_joined', (data) => {
+            chatBox.innerHTML += `<div class="msg"><span>System:</span> ${data.message}</div>`;
+        });
+
+        function startSelfDestructTimer() {
+            timerContainer.classList.remove('hidden');
+            let timeLeft = 90;
+            if(countdownInterval) clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                let m = Math.floor(timeLeft / 60);
+                let s = timeLeft % 60;
+                timeCountdown.innerHTML = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                
+                if(timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    alert('Self-destruct timer expired! Chat wiped.');
+                    chatBox.innerHTML = '<div class="msg" style="color:#ff3333;"><span>System:</span> Chat destroyed.</div>';
+                    timerContainer.classList.add('hidden');
+                    currentRoomCode = '';
+                }
+                timeLeft--;
+            }, 1000);
+        }
+
+        sendBtn.addEventListener('click', () => {
+            const text = msgInput.value.trim();
+            if(text && currentRoomCode) {
+                socket.emit('send_room_message', { code: currentRoomCode, sender: loggedUser, text: text });
+                msgInput.value = '';
+            }
+        });
+
+        socket.on('receive_room_message', (data) => {
+            const div = document.createElement('div');
+            div.className = 'msg';
+            div.innerHTML = `<span>[${data.timestamp}] ${data.sender}:</span> ${data.text}`;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
         });
 
         postBtn.addEventListener('click', () => {
-            const text = postInput.value.trim();
-            if(text) {
-                socket.emit('send_post', { sender: loggedUser, text: text });
+            const postText = postInput.value.trim();
+            if(postText) {
+                socket.emit('send_post', { sender: loggedUser, text: postText });
                 postInput.value = '';
             }
         });
@@ -435,10 +508,7 @@
         socket.on('receive_post', (data) => {
             const div = document.createElement('div');
             div.className = 'post-card';
-            div.innerHTML = `
-                <div class="post-header"><span>${data.sender}</span><span>${data.timestamp}</span></div>
-                <div class="post-body">${data.text}</div>
-            `;
+            div.innerHTML = `<div class="post-header"><span>${data.sender}</span><span>${data.timestamp}</span></div><div>${data.text}</div>`;
             feedBox.prepend(div);
         });
     </script>
