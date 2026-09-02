@@ -13,13 +13,11 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Memoria segura de usuarios registrados (Fundador: Lenox JG - 2026-09-02)
 const registeredUsers = {};
 
 io.on('connection', (socket) => {
   console.log(`[SECURE NODE CONNECTED]: ${socket.id}`);
 
-  // Registro con validación para evitar duplicados
   socket.on('register_node', (data) => {
     const { username, password } = data;
     if (username && password) {
@@ -37,11 +35,9 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Autenticación de acceso
   socket.on('auth_node', (data) => {
     const { username, password } = data;
     
-    // Llave maestra absoluta del fundador Lenox JG
     if (username === 'DIO197126' && password === '197126') {
       socket.emit('auth_success', {
         role: 'DIO_0',
@@ -62,11 +58,12 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('send_message', (data) => {
-    io.emit('receive_message', {
+  // Manejo de publicaciones para el muro tipo feed
+  socket.on('send_post', (data) => {
+    io.emit('receive_post', {
       sender: data.sender || 'Operator',
       text: data.text,
-      timestamp: new Date().toLocaleTimeString()
+      timestamp: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString()
     });
   });
 
