@@ -6,7 +6,7 @@ const https = require('https');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, { maxHttpBufferSize: 10 * 1024 * 1024 });
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -14,15 +14,14 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-const registeredUsers = {};
-const userBalances = {};
-const activeSockets = {}; 
-const activeChatRooms = {};
+const registeredUsers = {}; // username -> password
+const userBalances = {};    // username -> balance
+const activeSockets = {};   // username -> socket.id
+const privateMessageHistory = {}; // roomId -> array of messages
 
-// Tu dirección real de Trust Wallet para recibir los pagos
 const FOUNDER_BTC_ADDRESS = 'bc1qep3ntxf6lz037ny04706u88jsl364p0ny4776s';
 
-// Función para verificar transacciones reales en la Blockchain usando la API pública de Mempool
+// Verificación real de pagos en la blockchain (Pre-paid policy)
 function checkRealBlockchainPayment(expectedBtcAmount, callback) {
   const url = `https://mempool.space/api/address/${FOUNDER_BTC_ADDRESS}/txs`;
   
@@ -36,16 +35,13 @@ function checkRealBlockchainPayment(expectedBtcAmount, callback) {
           return callback(false, 'No transactions found on this address yet.');
         }
 
-        // Revisar las transacciones más recientes (últimas 5)
         const recentTxs = txs.slice(0, 5);
         let paymentFound = false;
 
         for (let tx of recentTxs) {
-          // Verificar si la transacción está sin gastar o confirmada recientemente (últimos 30 minutos)
           for (let vout of tx.vout) {
             if (vout.scriptpubkey_address === FOUNDER_BTC_ADDRESS) {
-              const receivedBtc = vout.value / 100000000; // Convertir satoshis a BTC
-              // Permitir un margen mínimo de tolerancia por comisiones de red
+              const receivedBtc = vout.value / 100000000;
               if (receivedBtc >= (expectedBtcAmount * 0.95)) {
                 paymentFound = true;
                 break;
@@ -58,7 +54,7 @@ function checkRealBlockchainPayment(expectedBtcAmount, callback) {
         if (paymentFound) {
           callback(true, 'Payment successfully confirmed on the Bitcoin blockchain!');
         } else {
-          callback(false, 'Payment not detected yet. Make sure you sent the exact BTC amount to the address.');
+          callback(false, 'Payment not detected yet. Make sure you sent the exact BTC amount first.');
         }
       } catch (e) {
         callback(false, 'Error parsing blockchain network response.');
@@ -79,7 +75,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    customId = customId.trim();
+    customId = customId.toString().trim();
     const numericId = parseInt(customId, 10);
 
     if (isNaN(numericId) || numericId < 0 || numericId > 1000000) {
@@ -94,7 +90,7 @@ io.on('connection', (socket) => {
     }
 
     registeredUsers[username] = password;
-    userBalances[username] = (username === 'DIO0') ? 99999.0 : 10.0; // Bono de bienvenida inicial
+    userBalances[username] = (username === 'DIO0') ? 99999.0 : 10.0;
     
     socket.emit('register_success', { 
       message: `Node ${username} registered successfully! You can now log in.`,
@@ -121,12 +117,13 @@ io.on('connection', (socket) => {
         badge: '★ DIO 0 [FOUNDER & SUPREME CONTROLLER ✓]',
         balance: userBalances[username],
         isVip: true,
-        isAdmin: true
+        isAdmin: true,
+        username: username
       });
       return;
     }
 
-    if (password === '197126' || (registeredUsers[username] && registeredUsers[username] === password)) {
+    if (registeredUsers[username] && registeredUsers[username] === password) {
       if (userBalances[username] === undefined) userBalances[username] = 10.0;
       activeSockets[username] = socket.id;
       const isVip = userBalances[username] >= 500.0; 
@@ -136,14 +133,14 @@ io.on('connection', (socket) => {
         badge: isVip ? `${username} [SECURE VIP OPERATOR ✓]` : `${username} [SECURE OPERATOR]`,
         balance: userBalances[username],
         isVip: isVip,
-        isAdmin: false
+        isAdmin: false,
+        username: username
       });
     } else {
       socket.emit('auth_error', { message: 'Invalid credentials or access denied.' });
     }
   });
 
-  // VERIFICACIÓN REAL EN LA BLOCKCHAIN DE BITCOIN
   socket.on('verify_btc_payment', (data) => {
     let { username, packageType } = data;
     if (!username || userBalances[username] === undefined) {
@@ -151,8 +148,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Definir la cantidad exacta de BTC requerida según el paquete elegido
-    let requiredBtc = 0.000012; // 10 DIO
+    let requiredBtc = 0.000012;
     let creditedDio = 10;
     
     if (packageType.includes('50 DIO')) { requiredBtc = 0.000055; creditedDio = 50; }
@@ -162,9 +158,6 @@ io.on('connection', (socket) => {
     else if (packageType.includes('5,000 DIO')) { requiredBtc = 0.0034; creditedDio = 5000; }
     else if (packageType.includes('10,000 DIO')) { requiredBtc = 0.0066; creditedDio = 10000; }
 
-    console.log(`[BLOCKCHAIN QUERY] Checking real transfer of ~${requiredBtc} BTC for user ${username}...`);
-
-    // Consulta real a la red Bitcoin
     checkRealBlockchainPayment(requiredBtc, (isPaid, message) => {
       if (isPaid) {
         userBalances[username] += creditedDio;
@@ -207,51 +200,60 @@ io.on('connection', (socket) => {
     const { username } = data;
     if (username && username !== 'DIO0' && userBalances[username] !== undefined) {
       userBalances[username] = Math.max(0, userBalances[username] - 3.0);
-      socket.emit('balance_updated', { newBalance: userBalances[username], message: 'Security Alert: -3 DIO deducted for leaving the app/tab.' });
+      socket.emit('balance_updated', { newBalance: userBalances[username], message: 'Security Alert: -3 DIO deducted for session expiry or leaving the tab.' });
     }
   });
 
-  socket.on('send_connection_request', (data) => {
-    let { targetUser, senderUser, messageText } = data;
-    targetUser = targetUser.trim();
-    const fullTarget = targetUser.startsWith('DIO') ? targetUser : 'DIO' + targetUser;
-    
-    const targetSocketId = activeSockets[fullTarget];
-    if (targetSocketId) {
-      io.to(targetSocketId).emit('incoming_connection_request', { 
-        sender: senderUser, 
-        message: messageText || 'Direct secure connection request.' 
-      });
-      socket.emit('request_sent_success', { message: `Request transmitted to ${fullTarget}` });
-    } else {
-      socket.emit('auth_error', { message: 'Target operator is offline.' });
+  // Chat directo por ID con borrado automático de historial al cambiar de conversación
+  socket.on('open_direct_chat', (data) => {
+    let { sender, recipient } = data;
+    recipient = recipient.trim();
+    const targetFull = recipient.startsWith('DIO') ? recipient.toUpperCase() : 'DIO' + recipient;
+
+    if (targetFull === sender) {
+      socket.emit('auth_error', { message: 'You cannot open a direct chat with yourself.' });
+      return;
     }
-  });
 
-  socket.on('generate_chat_code', (data) => {
-    const code = 'DIO-ROOM-' + Math.floor(1000 + Math.random() * 9000);
-    activeChatRooms[code] = { host: data.username, participants: [data.username] };
-    socket.emit('chat_code_generated', { code: code });
-  });
+    const usersPair = [sender, targetFull].sort();
+    const chatRoomId = `DIRECT-${usersPair[0]}-${usersPair[1]}`;
 
-  socket.on('connect_with_code', (data) => {
-    const { code, username } = data;
-    if (activeChatRooms[code]) {
-      activeChatRooms[code].participants.push(username);
-      socket.join(code);
-      io.to(code).emit('chat_joined', { message: `Operator ${username} has joined the room.` });
-      socket.emit('connection_success', { code: code });
-    } else {
-      socket.emit('auth_error', { message: 'Invalid or expired room code.' });
+    socket.join(chatRoomId);
+
+    // Si es una conversación nueva o limpia, aseguramos limpieza de datos previos
+    if (!privateMessageHistory[chatRoomId]) {
+      privateMessageHistory[chatRoomId] = [];
     }
-  });
 
-  socket.on('send_room_message', (data) => {
-    io.to(data.code).emit('receive_room_message', {
-      sender: data.sender,
-      text: data.text || '',
-      timestamp: new Date().toLocaleTimeString()
+    socket.emit('direct_chat_opened', {
+      room: chatRoomId,
+      recipient: targetFull,
+      history: privateMessageHistory[chatRoomId]
     });
+  });
+
+  socket.on('send_direct_message', (data) => {
+    const { room, sender, recipient, text, image } = data;
+    if ((!text && !image) || !room) return;
+
+    const messageData = {
+      sender: sender,
+      text: text || '',
+      image: image || null,
+      timestamp: new Date().toLocaleTimeString()
+    };
+
+    if (!privateMessageHistory[room]) {
+      privateMessageHistory[room] = [];
+    }
+    privateMessageHistory[room].push(messageData);
+
+    io.to(room).emit('receive_direct_message', messageData);
+
+    const recipientSocketId = activeSockets[recipient];
+    if (recipientSocketId) {
+      io.sockets.sockets.get(recipientSocketId)?.join(room);
+    }
   });
 
   socket.on('send_post', (data) => {
@@ -263,7 +265,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`[SECURE NODE DISCONNECTED]: ${socket.id}`);
+    for (const [user, sId] of Object.entries(activeSockets)) {
+      if (sId === socket.id) {
+        delete activeSockets[user];
+        break;
+      }
+    }
   });
 });
 
