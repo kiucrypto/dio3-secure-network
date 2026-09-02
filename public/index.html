@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>dio3.com — Extreme Privacy & Secure Network</title>
+    <title>dio3.com — Red Segura y Privacidad Extrema</title>
     <style>
         * {
             box-sizing: border-box;
@@ -12,7 +12,7 @@
             font-family: 'Courier New', Courier, monospace;
         }
         body {
-            background-color: #020202;
+            background-color: #010402;
             color: #00ff66;
             min-height: 100vh;
             display: flex;
@@ -22,21 +22,35 @@
             position: relative;
             overflow-x: hidden;
         }
+        /* Fondo Animado de Alta Calidad */
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: #010402;
+        }
         header {
-            border-bottom: 1px solid #00ff6633;
+            border-bottom: 1px solid #00ff6644;
             padding-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: rgba(2, 8, 4, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 2;
         }
         .logo {
             font-size: 1.1rem;
             font-weight: bold;
             letter-spacing: 2px;
             color: #00ff66;
+            text-shadow: 0 0 8px rgba(0,255,102,0.6);
         }
         .balance-display {
-            background: #001a0a;
+            background: rgba(0, 26, 10, 0.9);
             border: 1px solid #00ff66;
             padding: 4px 8px;
             font-size: 0.75rem;
@@ -50,32 +64,48 @@
             font-size: 0.7rem;
             font-weight: bold;
             border-radius: 4px;
+            box-shadow: 0 0 10px rgba(255,215,0,0.5);
         }
         main {
-            max-width: 650px;
+            max-width: 900px;
             margin: auto;
             width: 100%;
             display: flex;
             flex-direction: column;
             gap: 15px;
             padding: 15px 0;
+            z-index: 2;
+        }
+        /* Layout dividido para Login y Registro al costado */
+        .auth-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        @media (max-width: 768px) {
+            .auth-container {
+                grid-template-columns: 1fr;
+            }
         }
         .panel {
-            background: rgba(8, 8, 8, 0.95);
-            border: 1px solid #00ff6644;
+            background: rgba(4, 12, 7, 0.92);
+            border: 1px solid #00ff6655;
             padding: 20px;
             border-radius: 6px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px);
+            position: relative;
         }
         h2 {
             font-size: 0.95rem;
             margin-bottom: 10px;
             color: #fff;
-            border-bottom: 1px dashed #00ff6633;
+            border-bottom: 1px dashed #00ff6644;
             padding-bottom: 5px;
         }
         p {
             font-size: 0.75rem;
-            color: #888;
+            color: #99ccaa;
             margin-bottom: 10px;
             line-height: 1.4;
         }
@@ -102,7 +132,7 @@
         }
         input, select, textarea, button {
             width: 100%;
-            background: #000;
+            background: rgba(0, 0, 0, 0.85);
             border: 1px solid #00ff6666;
             color: #00ff66;
             padding: 10px;
@@ -117,9 +147,11 @@
             font-weight: bold;
             cursor: pointer;
             letter-spacing: 1px;
+            transition: all 0.2s ease;
         }
         button:hover {
             background: #00cc52;
+            box-shadow: 0 0 10px rgba(0,255,102,0.5);
         }
         .btn-alt {
             background: transparent;
@@ -128,7 +160,7 @@
             font-size: 0.75rem;
         }
         .timer-box {
-            background: #200;
+            background: rgba(32, 0, 0, 0.9);
             border: 1px solid #ff3333;
             color: #ff6666;
             padding: 8px;
@@ -138,10 +170,23 @@
             margin-bottom: 10px;
             font-weight: bold;
         }
-        .feed-box, .chat-box {
+        /* Fondo de marca dio3.com integrado en el chat */
+        .chat-box {
+            height: 200px;
+            background: linear-gradient(rgba(0, 0, 0, 0.9), rgba(0, 15, 5, 0.92)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 100 100"><text x="10" y="50" fill="rgba(0,255,102,0.04)" font-size="16" font-weight="bold" transform="rotate(-30 50 50)">dio3.com</text></svg>');
+            border: 1px solid #00ff6644;
+            border-radius: 4px;
+            padding: 10px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .feed-box {
             height: 180px;
-            background: #000;
-            border: 1px solid #00ff6633;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #00ff6644;
             border-radius: 4px;
             padding: 10px;
             overflow-y: auto;
@@ -151,12 +196,12 @@
             gap: 8px;
         }
         .post-card, .msg {
-            background: #0b120e;
+            background: #0b1610;
             border: 1px solid #00ff6644;
             padding: 8px;
             border-radius: 4px;
             font-size: 0.75rem;
-            color: #ccc;
+            color: #ddd;
         }
         .msg span, .post-header {
             color: #00ff66;
@@ -179,13 +224,19 @@
         footer {
             text-align: center;
             font-size: 0.65rem;
-            color: #555;
+            color: #668877;
             border-top: 1px solid #00ff6622;
             padding-top: 10px;
+            z-index: 2;
+            background: rgba(2, 8, 4, 0.85);
+            backdrop-filter: blur(5px);
         }
     </style>
 </head>
 <body>
+
+    <!-- Fondo Animado de Partículas -->
+    <canvas id="bgCanvas"></canvas>
 
     <header>
         <div class="logo">DIO3.COM</div>
@@ -196,29 +247,47 @@
     </header>
 
     <main>
-        <!-- 1. SALDO, PACKS Y RECARGAS DE BITCOIN (PRIMERO EN LA VISTA) -->
-        <div class="panel" style="border-color: #ffd700;">
-            <h2 style="color: #ffd700;">★ WALLET BALANCES & VIP PACKS (FOUNDER WALLET)</h2>
-            <select id="membershipSelect">
-                <option value="10 DIO">10 DIO — $1.10 USD (Standard Starter)</option>
-                <option value="50 DIO">50 DIO — $4.99 USD (Active Operator)</option>
-                <option value="100 DIO">100 DIO — $7.99 USD (Secure Pro)</option>
-                <option value="10,000 DIO">10,000 DIO — $599 USD (VIP Enterprise ✓)</option>
-            </select>
-            <div class="btc-box">bc1qep3ntxf6lz037ny04706u88jsl364p0ny4776s</div>
-            <p style="text-align: center; color: #ffd700;">Send exact Bitcoin to founder wallet (DIO 0) for instant balance updates.</p>
+        <!-- SECCIÓN DE ACCESO Y REGISTRO AL COSTADO (SPLIT-SCREEN) -->
+        <div id="authWrapper" class="auth-container">
+            <!-- Panel de Inicio de Sesión -->
+            <div id="authPanel" class="panel">
+                <h2>INICIAR SESIÓN</h2>
+                <p>Accede con tu ID asignado y contraseña numérica.</p>
+                <div class="input-group">
+                    <span class="prefix">DIO</span>
+                    <input type="number" id="userInput" placeholder="Ej. 0, 1, 777..." min="0" max="1000000" inputmode="numeric">
+                </div>
+                <input type="number" id="passInput" placeholder="Contraseña numérica..." inputmode="numeric">
+                <button id="authBtn">ACCEDER AL NODO</button>
+            </div>
+
+            <!-- Panel de Registro Independiente al Costado -->
+            <div id="registerPanel" class="panel" style="border-color: #00ffcc;">
+                <h2 style="color: #00ffcc;">NUEVO USUARIO (REGISTRO)</h2>
+                <p>¿Primera vez aquí? Crea tu ID único y obtén +10 DIO de bienvenida segura.</p>
+                <div class="input-group" style="border-color: #00ffcc;">
+                    <span class="prefix" style="background: #002215; color: #00ffcc; border-color: #00ffcc;">DIO</span>
+                    <input type="number" id="regUserInput" placeholder="Elige tu ID (0 a 1M)..." style="color: #00ffcc;" min="0" max="1000000" inputmode="numeric">
+                </div>
+                <input type="number" id="regPassInput" placeholder="Crea tu contraseña numérica..." style="border-color: #00ffcc; color: #00ffcc;" inputmode="numeric">
+                <button id="registerBtn" style="background: #00ffcc; color: #000;">REGISTRARSE AHORA</button>
+            </div>
         </div>
 
-        <!-- AUTHENTICATION & REGISTRATION -->
-        <div id="authPanel" class="panel">
-            <h2>SECURE NODE LOGIN & REGISTRATION (DIO 0 to 1,000,000)</h2>
-            <div class="input-group">
-                <span class="prefix">DIO</span>
-                <input type="number" id="userInput" placeholder="e.g. 0, 1, 777..." min="0" max="1000000" inputmode="numeric">
-            </div>
-            <input type="number" id="passInput" placeholder="Numeric password..." inputmode="numeric">
-            <button id="authBtn">ACCESS NODE</button>
-            <button id="registerBtn" class="btn-alt">+ REGISTER CHOSEN ID FIRST (+10 DIO)</button>
+        <!-- WALLET BALANCES & ALL PACKS -->
+        <div class="panel" style="border-color: #ffd700;">
+            <h2 style="color: #ffd700;">★ WALLET BALANCES & ALL PACKS (FOUNDER WALLET)</h2>
+            <select id="membershipSelect">
+                <option value="10 DIO">10 DIO — $1.10 USD (Starter Pack)</option>
+                <option value="50 DIO">50 DIO — $4.99 USD (Operator Pack)</option>
+                <option value="100 DIO">100 DIO — $7.99 USD (Pro Secure Pack)</option>
+                <option value="500 DIO">500 DIO — $34.99 USD (VIP Elite Pack)</option>
+                <option value="1,000 DIO">1,000 DIO — $65.00 USD (Master Node Pack)</option>
+                <option value="5,000 DIO">5,000 DIO — $310.00 USD (Syndicate Pack)</option>
+                <option value="10,000 DIO">10,000 DIO — $599 USD (Supreme VIP Enterprise ✓)</option>
+            </select>
+            <div class="btc-box">bc1qep3ntxf6lz037ny04706u88jsl364p0ny4776s</div>
+            <p style="text-align: center; color: #ffd700;">Envíe Bitcoin exacto a la billetera del fundador para actualizar saldos al instante.</p>
         </div>
 
         <!-- FOUNDER BALANCE CONTROLLER (DIO 0) -->
@@ -226,76 +295,130 @@
             <h2 style="color: #ffd700;">★ FOUNDER CONTROLLER (DIO 0 ✓ [SUPREME ADMIN])</h2>
             <div class="input-group" style="border-color: #ffd700;">
                 <span class="prefix" style="background: #332200; color: #ffd700;">DIO</span>
-                <input type="number" id="adminTargetUser" placeholder="Target User ID (e.g. 777)..." style="color: #ffd700;" min="0" max="1000000" inputmode="numeric">
+                <input type="number" id="adminTargetUser" placeholder="ID Destino (Ej. 777)..." style="color: #ffd700;" min="0" max="1000000" inputmode="numeric">
             </div>
-            <input type="number" id="adminAmountInput" placeholder="Amount of DIO to credit..." style="border-color: #ffd700; color: #ffd700;">
-            <button id="adminSendBalanceBtn" style="background: #ffd700; color: #000;">CREDIT DIO TO USER</button>
+            <input type="number" id="adminAmountInput" placeholder="Cantidad de DIO a acreditar..." style="border-color: #ffd700; color: #ffd700;">
+            <button id="adminSendBalanceBtn" style="background: #ffd700; color: #000;">ACREDITAR DIO</button>
         </div>
 
-        <!-- SECURE COMMUNICATOR & MESSAGING -->
+        <!-- SECURE COMMUNICATOR & MESSAGING (Con fondo dio3.com y temporizador) -->
         <div id="commPanel" class="panel hidden">
-            <h2>SECURE USER-TO-USER COMM & MESSAGING</h2>
+            <h2>COMUNICADOR SEGURO & CHAT PRIVADO</h2>
             
             <div style="margin-bottom: 12px; border-bottom: 1px dashed #00ff6633; padding-bottom: 10px;">
-                <p>Send Direct Request & Message to Target User ID:</p>
+                <p>Enviar solicitud y mensaje directo al ID:</p>
                 <div class="input-group" style="margin-bottom: 8px;">
                     <button class="prefix" style="border:none; cursor:default; width:auto;">DIO</button>
-                    <input type="number" id="targetRequestInput" placeholder="e.g. 777..." style="margin-bottom:0; border:none;" min="0" max="1000000" inputmode="numeric">
+                    <input type="number" id="targetRequestInput" placeholder="Ej. 777..." style="margin-bottom:0; border:none;" min="0" max="1000000" inputmode="numeric">
                 </div>
-                <textarea id="targetMessageInput" placeholder="Enter secure message..." rows="2" style="resize:none; margin-bottom:8px;"></textarea>
-                <button id="sendRequestBtn" style="font-size:0.75rem;">SEND REQUEST & MESSAGE</button>
+                <textarea id="targetMessageInput" placeholder="Mensaje seguro..." rows="2" style="resize:none; margin-bottom:8px;"></textarea>
+                <button id="sendRequestBtn" style="font-size:0.75rem;">ENVIAR SOLICITUD & MENSAJE</button>
             </div>
 
             <div style="margin-bottom: 12px;">
-                <button id="generateCodeBtn" style="background:#003311; color:#00ff66; border:1px solid #00ff66; font-size:0.75rem;">GENERATE ROOM CODE</button>
+                <button id="generateCodeBtn" style="background:#003311; color:#00ff66; border:1px solid #00ff66; font-size:0.75rem;">GENERAR CÓDIGO DE SALA</button>
                 <p id="generatedCodeDisplay" style="color:#ffd700; font-weight:bold; margin-top:5px;"></p>
                 <div style="display: flex; gap: 5px; margin-top: 5px;">
-                    <input type="text" id="chatCodeInput" placeholder="Enter room code..." style="margin-bottom:0;">
-                    <button id="connectCodeBtn" style="width: 110px; margin-bottom:0; font-size:0.75rem;">CONNECT</button>
+                    <input type="text" id="chatCodeInput" placeholder="Ingresar código de sala..." style="margin-bottom:0;">
+                    <button id="connectCodeBtn" style="width: 110px; margin-bottom:0; font-size:0.75rem;">CONECTAR</button>
                 </div>
             </div>
 
+            <!-- TEMPORIZADOR DE MENSAJES -->
             <div id="timerContainer" class="timer-box hidden">
-                CHAT SELF-DESTRUCT TIMER: <span id="timeCountdown">01:30</span>
+                TEMPORIZADOR DE AUTODESTRUCCIÓN DE CHAT: <span id="timeCountdown">01:30</span>
             </div>
 
+            <!-- Chat con fondo marca de agua dio3.com -->
             <div class="chat-box" id="chatBox">
-                <div class="msg"><span>System:</span> Connect to a room code or accept an incoming request to start.</div>
+                <div class="msg"><span>Sistema de Bienvenida dio3.com:</span> Conexión cifrada establecida con éxito. Su identidad está protegida bajo los protocolos de seguridad de la red.</div>
             </div>
 
             <div style="display: flex; gap: 5px;">
-                <input type="text" id="msgInput" placeholder="Secure message..." style="margin-bottom:0;">
-                <button id="sendBtn" style="width: 80px; margin-bottom:0;">SEND</button>
+                <input type="text" id="msgInput" placeholder="Mensaje cifrado..." style="margin-bottom:0;">
+                <button id="sendBtn" style="width: 80px; margin-bottom:0;">ENVIAR</button>
             </div>
         </div>
 
         <!-- SOCIAL FEED -->
         <div id="socialPanel" class="panel hidden">
-            <h2>COMMUNITY FEED</h2>
-            <textarea id="postInput" placeholder="Publish bulletin..." rows="2" style="resize:none;"></textarea>
-            <button id="postBtn" style="margin-bottom: 10px;">PUBLISH</button>
+            <h2>BOLETÍN DE LA COMUNIDAD</h2>
+            <textarea id="postInput" placeholder="Publicar aviso..." rows="2" style="resize:none;"></textarea>
+            <button id="postBtn" style="margin-bottom: 10px;">PUBLICAR</button>
             <div class="feed-box" id="feedBox"></div>
         </div>
 
-        <!-- SYSTEM MANUAL & PRIVACY POLICIES -->
+        <!-- MANUAL DE SISTEMA -->
         <div class="panel">
-            <h2>★ SYSTEM MANUAL & PRIVACY PROTOCOLS</h2>
-            <p style="color: #00ff66;"><strong>Founder & Supreme Administrator:</strong> DIO 0 (Lenox JG)</p>
-            <p><strong>How to Use:</strong><br>
-            1. Enter your numeric ID (0 to 1,000,000) and numeric password.<br>
-            2. Click <strong>REGISTER CHOSEN ID FIRST</strong> to claim your node.<br>
-            3. <strong>Privacy Penalty:</strong> Leaving the app or switching tabs deducts <strong>3 DIO</strong> (Except for DIO 0).<br>
-            4. <strong>Chat Timer:</strong> Active chat rooms feature a strict 90-second self-destruct countdown timer.<br>
-            5. <strong>Real Payments:</strong> Send Bitcoin directly to the founder wallet above to fund packs.</p>
+            <h2>★ MANUAL DE SISTEMA Y PRIVACIDAD</h2>
+            <p style="color: #00ff66;"><strong>Fundador & Administrador Supremo:</strong> DIO 0 (Lenox JG ✓)</p>
+            <p><strong>Instrucciones:</strong><br>
+            1. <strong>Nuevos usuarios:</strong> Regístrese en el panel derecho al costado para crear su cuenta con +10 DIO gratis.<br>
+            2. <strong>Seguridad en tiempo real:</strong> Cambiar de app o salir de la pestaña aplica una penalización automática de -3 DIO.<br>
+            3. <strong>Chat Seguro:</strong> Las salas de chat cuentan con marca de agua oficial y un temporizador de autodestrucción estricto de 90 segundos.<br>
+            4. <strong>Pagos Reales:</strong> Transfiera Bitcoin directamente a la billetera del fundador para acreditar saldos de forma instantánea.</p>
         </div>
     </main>
 
     <footer>
-        Dio 3 — High Privacy Network [Founder: Lenox JG | Node: DIO 0 ✓]
+        Dio 3 — Red de Alta Privacidad [Fundador: Lenox JG | Nodo: DIO 0 ✓]
     </footer>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        // Fondo Animado de Partículas Cibernéticas
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        for(let i = 0; i < 60; i++) {
+            particles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                vx: (Math.random() - 0.5) * 0.8,
+                vy: (Math.random() - 0.5) * 0.8,
+                size: Math.random() * 2 + 1
+            });
+        }
+
+        function animateBg() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = 'rgba(0, 255, 102, 0.15)';
+            ctx.strokeStyle = 'rgba(0, 255, 102, 0.05)';
+
+            particles.forEach((p, index) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                if(p.x < 0 || p.x > width) p.vx *= -1;
+                if(p.y < 0 || p.y > height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                for(let j = index + 1; j < particles.length; j++) {
+                    let p2 = particles[j];
+                    let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if(dist < 100) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            });
+            requestAnimationFrame(animateBg);
+        }
+        animateBg();
+
         const socket = io();
 
         let loggedUser = '';
@@ -304,7 +427,9 @@
         let currentRoomCode = '';
         let countdownInterval = null;
 
+        const authWrapper = document.getElementById('authWrapper');
         const authPanel = document.getElementById('authPanel');
+        const registerPanel = document.getElementById('registerPanel');
         const adminPanel = document.getElementById('adminPanel');
         const commPanel = document.getElementById('commPanel');
         const socialPanel = document.getElementById('socialPanel');
@@ -312,7 +437,11 @@
         const userInput = document.getElementById('userInput');
         const passInput = document.getElementById('passInput');
         const authBtn = document.getElementById('authBtn');
+
+        const regUserInput = document.getElementById('regUserInput');
+        const regPassInput = document.getElementById('regPassInput');
         const registerBtn = document.getElementById('registerBtn');
+
         const userBadge = document.getElementById('userBadge');
         const balanceDisplay = document.getElementById('balanceDisplay');
         
@@ -340,17 +469,19 @@
         const postInput = document.getElementById('postInput');
         const postBtn = document.getElementById('postBtn');
 
+        // Detección de salida de la pestaña / app
         document.addEventListener('visibilitychange', () => {
             if (document.hidden && loggedUser && loggedUser !== 'DIO0') {
                 socket.emit('penalize_session_exit', { username: loggedUser });
             }
         });
 
+        // Registro de nuevos usuarios
         registerBtn.addEventListener('click', () => {
-            const rawId = userInput.value.trim();
-            const password = passInput.value.trim();
+            const rawId = regUserInput.value.trim();
+            const password = regPassInput.value.trim();
             if(rawId === '' || !password) {
-                alert('Please enter your numeric ID (0 or higher) and password.');
+                alert('Por favor ingrese su ID numérico y contraseña para registrarse.');
                 return;
             }
             socket.emit('register_node', { customId: rawId, password: password });
@@ -358,8 +489,12 @@
 
         socket.on('register_success', (data) => {
             alert(data.message);
+            userInput.value = regUserInput.value;
+            regUserInput.value = '';
+            regPassInput.value = '';
         });
 
+        // Inicio de sesión
         authBtn.addEventListener('click', () => {
             const rawId = userInput.value.trim();
             const pass = passInput.value.trim();
@@ -367,12 +502,12 @@
                 loggedUser = 'DIO' + rawId;
                 socket.emit('auth_node', { customId: rawId, password: pass });
             } else {
-                alert('Enter your ID number and numeric password.');
+                alert('Ingrese su número de ID y contraseña numérica.');
             }
         });
 
         socket.on('auth_success', (data) => {
-            authPanel.classList.add('hidden');
+            authWrapper.classList.add('hidden');
             commPanel.classList.remove('hidden');
             socialPanel.classList.remove('hidden');
             
@@ -387,6 +522,9 @@
             balanceDisplay.innerHTML = `Saldo: ${userBalance} DIO`;
             userBadge.className = data.isVip ? 'badge-vip' : 'balance-display';
             userBadge.innerHTML = data.badge;
+
+            // Mensaje de bienvenida con marca segura al iniciar sesión
+            chatBox.innerHTML += `<div class="msg" style="color:#00ffcc;"><span>Bienvenida de Seguridad dio3.com:</span> Nodo ${loggedUser} verificado. Canal cifrado activo.</div>`;
         });
 
         socket.on('auth_error', (data) => {
@@ -401,7 +539,7 @@
                 adminTargetUser.value = '';
                 adminAmountInput.value = '';
             } else {
-                alert('Enter target user ID and amount.');
+                alert('Ingrese el ID de usuario destino y la cantidad.');
             }
         });
 
@@ -416,18 +554,18 @@
             const msg = targetMessageInput.value.trim();
             if(target !== '') {
                 socket.emit('send_connection_request', { targetUser: target, senderUser: loggedUser, messageText: msg });
-                alert('Connection request and secure message transmitted.');
+                alert('Solicitud de conexión transmitida.');
                 targetRequestInput.value = '';
                 targetMessageInput.value = '';
             } else {
-                alert('Enter a target user ID.');
+                alert('Ingrese un ID de usuario destino.');
             }
         });
 
         socket.on('incoming_connection_request', (data) => {
-            const accept = confirm(`Incoming connection request & message from ${data.sender}:\n"${data.message}"\n\nAccept and open secure channel?`);
+            const accept = confirm(`Solicitud de conexión entrante de ${data.sender}:\n"${data.message}"\n\n¿Aceptar canal seguro?`);
             if(accept) {
-                alert('Request accepted. Generate or enter a shared room code to begin secure chat.');
+                alert('Solicitud aceptada. Ingrese el código de sala compartido para chatear.');
             }
         });
 
@@ -436,7 +574,7 @@
         });
 
         socket.on('chat_code_generated', (data) => {
-            generatedCodeDisplay.innerHTML = `Room Code: ${data.code}`;
+            generatedCodeDisplay.innerHTML = `Código de Sala: ${data.code}`;
         });
 
         connectCodeBtn.addEventListener('click', () => {
@@ -444,20 +582,20 @@
             if(code) {
                 socket.emit('connect_with_code', { code: code, username: loggedUser });
             } else {
-                alert('Enter a valid room code.');
+                alert('Ingrese un código de sala válido.');
             }
         });
 
         socket.on('connection_success', (data) => {
             currentRoomCode = data.code;
-            chatBox.innerHTML += `<div class="msg"><span>System:</span> Connected to secure room ${data.code}</div>`;
+            chatBox.innerHTML += `<div class="msg"><span>Sistema:</span> Conectado a la sala segura ${data.code}</div>`;
             if (!isUserVip) {
                 startSelfDestructTimer();
             }
         });
 
         socket.on('chat_joined', (data) => {
-            chatBox.innerHTML += `<div class="msg"><span>System:</span> ${data.message}</div>`;
+            chatBox.innerHTML += `<div class="msg"><span>Sistema:</span> ${data.message}</div>`;
         });
 
         function startSelfDestructTimer() {
@@ -472,8 +610,8 @@
                 
                 if(timeLeft <= 0) {
                     clearInterval(countdownInterval);
-                    alert('Self-destruct timer expired! Chat wiped.');
-                    chatBox.innerHTML = '<div class="msg" style="color:#ff3333;"><span>System:</span> Chat destroyed.</div>';
+                    alert('¡El temporizador de autodestrucción expiró! Chat borrado por seguridad.');
+                    chatBox.innerHTML = '<div class="msg" style="color:#ff3333;"><span>Sistema:</span> Chat destruido de forma segura.</div>';
                     timerContainer.classList.add('hidden');
                     currentRoomCode = '';
                 }
