@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -151,6 +151,16 @@
         .btn-alt:hover {
             background: #00ff6611;
         }
+        .credentials-box {
+            background: #000;
+            border: 1px solid #00ff66;
+            padding: 10px;
+            font-size: 0.75rem;
+            color: #00ff66;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: none;
+        }
         .chat-box {
             height: 180px;
             background: #000;
@@ -209,48 +219,53 @@
     </header>
 
     <main>
-        <!-- SECCIÓN DE AUTENTICACIÓN / ACCESO -->
+        <!-- AUTHENTICATION PANEL -->
         <div id="authPanel" class="panel">
-            <h2>ACCESO AL NÚCLEO SEGURO</h2>
-            <p>Ingrese su identificador (con prefijo DIO predeterminado) y contraseña de operador.</p>
+            <h2>SECURE CORE AUTHENTICATION</h2>
+            <p>Enter your identifier (with default DIO prefix) and operator password.</p>
             
             <div class="input-group">
                 <span class="prefix">DIO</span>
-                <input type="text" id="userInput" placeholder="Ej: 197126 o ID de 9 dígitos" autocomplete="off">
+                <input type="text" id="userInput" placeholder="e.g. 197126 or 9-digit ID" autocomplete="off">
             </div>
             
-            <input type="password" id="passInput" placeholder="Contraseña de acceso..." autocomplete="off">
+            <input type="password" id="passInput" placeholder="Access password..." autocomplete="off">
             
-            <button id="authBtn">ACCEDER AL NÚCLEO</button>
-            <button id="registerBtn" class="btn-alt">+ NUEVO USUARIO (GENERAR ID DE 9 DÍGITOS)</button>
+            <button id="authBtn">ACCESS CORE</button>
+            <button id="registerBtn" class="btn-alt">+ NEW USER (GENERATE UNIQUE 9-DIGIT ID)</button>
+            
+            <div id="credOutputBox" class="credentials-box">
+                <p id="credText" style="margin-bottom: 5px; color: #fff;"></p>
+                <button id="copyCredBtn" style="background:#003311; color:#00ff66; border:1px solid #00ff66; padding:5px; font-size:0.7rem;">COPY UNIQUE CREDENTIALS</button>
+            </div>
         </div>
 
-        <!-- PASARELA DE PAGOS EN BTC (Trust Wallet) -->
+        <!-- BITCOIN PAYMENT GATEWAY -->
         <div id="paymentPanel" class="panel">
-            <h2>PASARELA DE PAGO - BITCOIN (TRUST WALLET)</h2>
-            <p>Para activar membresías, rangos exclusivos o acceso total al nodo, transfiera los fondos a su dirección de Trust Wallet autorizada:</p>
+            <h2>BITCOIN PAYMENT GATEWAY (TRUST WALLET)</h2>
+            <p>To activate memberships, exclusive privileges or full network access, transfer funds to the authorized Trust Wallet address:</p>
             <div class="btc-box">bc1qep3ntxf6lz037ny04706u88jsl364p0ny4776s</div>
-            <p style="font-size: 0.7rem; color: #666;">* Protocolo descentralizado de alta seguridad. Cero intermediarios, anonimato total garantizado.</p>
+            <p style="font-size: 0.7rem; color: #666;">* Decentralized high-security protocol. Zero intermediaries, total privacy guaranteed.</p>
         </div>
 
-        <!-- COMUNICACIÓN EN TIEMPO REAL -->
+        <!-- REAL-TIME EPHEMERAL COMM CHANNEL -->
         <div id="commPanel" class="panel hidden">
-            <h2>CANAL DE COMUNICACIÓN EFÍMERO</h2>
+            <h2>EPHEMERAL COMMUNICATION CHANNEL</h2>
             <div class="chat-box" id="chatBox">
-                <div class="msg"><span>Sistema:</span> Conexión segura establecida con éxito. Tráfico cifrado activo.</div>
+                <div class="msg"><span>System:</span> Secure connection established successfully. Encrypted traffic active.</div>
             </div>
             <div style="display: flex; gap: 5px;">
-                <input type="text" id="msgInput" placeholder="Enviar mensaje seguro..." style="margin-bottom:0;" autocomplete="off">
-                <button id="sendBtn" style="width: 100px; margin-bottom:0;">ENVIAR</button>
+                <input type="text" id="msgInput" placeholder="Send secure message..." style="margin-bottom:0;" autocomplete="off">
+                <button id="sendBtn" style="width: 100px; margin-bottom:0;">SEND</button>
             </div>
         </div>
     </main>
 
     <footer>
-        Dio 3 — Extreme Privacy Network & Live Comms [MILITARY SHIELD ACTIVE]
+        Dio 3 — High Privacy Network & Live Comms [Founder: Lenox JG | 2026-09-02]
     </footer>
 
-    <!-- Fondo de partículas -->
+    <!-- Background Animation Script -->
     <script>
         const canvas = document.getElementById('bgCanvas');
         const ctx = canvas.getContext('2d');
@@ -305,7 +320,7 @@
         animate();
     </script>
 
-    <!-- Socket.io y Lógica de Usuario -->
+    <!-- Socket.io & Logic Script -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -319,23 +334,39 @@
         const authBtn = document.getElementById('authBtn');
         const registerBtn = document.getElementById('registerBtn');
         
+        const credOutputBox = document.getElementById('credOutputBox');
+        const credText = document.getElementById('credText');
+        const copyCredBtn = document.getElementById('copyCredBtn');
+        
         const chatBox = document.getElementById('chatBox');
         const msgInput = document.getElementById('msgInput');
         const sendBtn = document.getElementById('sendBtn');
 
-        // Botón para generar ID de 9 dígitos aleatorios automáticamente para nuevos usuarios
+        let lastGeneratedUser = '';
+
+        // Generate unique 9-digit ID safely once
         registerBtn.addEventListener('click', () => {
             const random9Digits = Math.floor(100000000 + Math.random() * 900000000).toString();
             userInput.value = random9Digits;
-            const password = prompt('Nuevo usuario generado (' + random9Digits + '). Por favor, ingresa tu contraseña secreta para este nodo:');
+            const password = prompt('New unique node generated (DIO' + random9Digits + '). Please enter your secure password:');
             
             if(password) {
-                socket.emit('register_node', { username: 'DIO' + random9Digits, password: password });
+                lastGeneratedUser = 'DIO' + random9Digits;
+                socket.emit('register_node', { username: lastGeneratedUser, password: password });
             }
         });
 
         socket.on('register_success', (data) => {
-            alert('¡Nodo registrado con éxito!\nTu usuario completo es: ' + data.username + '\nGuarda tu contraseña.');
+            credText.innerHTML = `Saved ID: <b>${data.username}</b><br>Copy your unique credentials before leaving.`;
+            credOutputBox.style.display = 'block';
+        });
+
+        copyCredBtn.addEventListener('click', () => {
+            if(userInput.value) {
+                const fullId = userInput.value.startsWith('DIO') ? userInput.value : 'DIO' + userInput.value;
+                navigator.clipboard.writeText(fullId);
+                alert('User ID (' + fullId + ') copied to clipboard!');
+            }
         });
 
         authBtn.addEventListener('click', () => {
@@ -343,11 +374,10 @@
             const password = passInput.value.trim();
             
             if(rawUser && password) {
-                // Combina el prefijo predeterminado DIO con el número ingresado
                 const fullUsername = rawUser.startsWith('DIO') ? rawUser : 'DIO' + rawUser;
                 socket.emit('auth_node', { username: fullUsername, password: password });
             } else {
-                alert('Ingrese su identificador y contraseña.');
+                alert('Please enter your identifier and password.');
             }
         });
 
@@ -365,7 +395,7 @@
         sendBtn.addEventListener('click', () => {
             const text = msgInput.value.trim();
             if(text) {
-                socket.emit('send_message', { sender: 'Operador DIO', text: text });
+                socket.emit('send_message', { sender: 'Operator DIO', text: text });
                 msgInput.value = '';
             }
         });
