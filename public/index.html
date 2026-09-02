@@ -22,7 +22,6 @@
             position: relative;
             overflow-x: hidden;
         }
-        /* Fondo interactivo de partículas en movimiento */
         #bgCanvas {
             position: fixed;
             top: 0;
@@ -49,7 +48,6 @@
             color: #00ff66;
             text-shadow: 0 0 10px rgba(0,255,102,0.6);
         }
-        /* Insignia VIP X EXTREME - Neon Gold con Check */
         .badge-vip {
             background: linear-gradient(135deg, #ffd700, #ff8c00);
             color: #000;
@@ -99,6 +97,27 @@
             margin-bottom: 10px;
             line-height: 1.4;
         }
+        .input-group {
+            display: flex;
+            align-items: center;
+            background: #000;
+            border: 1px solid #00ff6666;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .prefix {
+            padding: 10px;
+            background: #0f1a12;
+            color: #00ff66;
+            font-weight: bold;
+            border-right: 1px solid #00ff6666;
+            font-size: 0.9rem;
+        }
+        .input-group input {
+            border: none;
+            margin-bottom: 0;
+            background: transparent;
+        }
         input, button {
             width: 100%;
             background: #000;
@@ -121,6 +140,16 @@
         button:hover {
             background: #00cc52;
             box-shadow: 0 0 12px rgba(0,255,102,0.5);
+        }
+        .btn-alt {
+            background: transparent;
+            color: #00ff66;
+            border: 1px dashed #00ff6666;
+            font-size: 0.75rem;
+            margin-top: 5px;
+        }
+        .btn-alt:hover {
+            background: #00ff6611;
         }
         .chat-box {
             height: 180px;
@@ -172,7 +201,6 @@
 </head>
 <body>
 
-    <!-- Canvas del fondo interactivo de partículas -->
     <canvas id="bgCanvas"></canvas>
 
     <header>
@@ -181,12 +209,20 @@
     </header>
 
     <main>
-        <!-- SECCIÓN DE AUTENTICACIÓN -->
+        <!-- SECCIÓN DE AUTENTICACIÓN / ACCESO -->
         <div id="authPanel" class="panel">
-            <h2>AUTENTICACIÓN DE NÚCLEO SEGURO</h2>
-            <p>Acceso estrictamente privado. Ingrese su clave numérica de operador (Maestra: 197126).</p>
-            <input type="password" id="credentialInput" placeholder="Clave numérica..." autocomplete="off">
+            <h2>ACCESO AL NÚCLEO SEGURO</h2>
+            <p>Ingrese su identificador (con prefijo DIO predeterminado) y contraseña de operador.</p>
+            
+            <div class="input-group">
+                <span class="prefix">DIO</span>
+                <input type="text" id="userInput" placeholder="Ej: 197126 o ID de 9 dígitos" autocomplete="off">
+            </div>
+            
+            <input type="password" id="passInput" placeholder="Contraseña de acceso..." autocomplete="off">
+            
             <button id="authBtn">ACCEDER AL NÚCLEO</button>
+            <button id="registerBtn" class="btn-alt">+ NUEVO USUARIO (GENERAR ID DE 9 DÍGITOS)</button>
         </div>
 
         <!-- PASARELA DE PAGOS EN BTC (Trust Wallet) -->
@@ -197,7 +233,7 @@
             <p style="font-size: 0.7rem; color: #666;">* Protocolo descentralizado de alta seguridad. Cero intermediarios, anonimato total garantizado.</p>
         </div>
 
-        <!-- COMUNICACIÓN EN TIEMPO REAL (Oculto hasta autenticar) -->
+        <!-- COMUNICACIÓN EN TIEMPO REAL -->
         <div id="commPanel" class="panel hidden">
             <h2>CANAL DE COMUNICACIÓN EFÍMERO</h2>
             <div class="chat-box" id="chatBox">
@@ -214,7 +250,7 @@
         Dio 3 — Extreme Privacy Network & Live Comms [MILITARY SHIELD ACTIVE]
     </footer>
 
-    <!-- Script del fondo de puntos dinámicos -->
+    <!-- Fondo de partículas -->
     <script>
         const canvas = document.getElementById('bgCanvas');
         const ctx = canvas.getContext('2d');
@@ -269,7 +305,7 @@
         animate();
     </script>
 
-    <!-- Script de Socket.io y lógica de la red -->
+    <!-- Socket.io y Lógica de Usuario -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -278,24 +314,46 @@
         const commPanel = document.getElementById('commPanel');
         const userBadge = document.getElementById('userBadge');
         
-        const credentialInput = document.getElementById('credentialInput');
+        const userInput = document.getElementById('userInput');
+        const passInput = document.getElementById('passInput');
         const authBtn = document.getElementById('authBtn');
+        const registerBtn = document.getElementById('registerBtn');
         
         const chatBox = document.getElementById('chatBox');
         const msgInput = document.getElementById('msgInput');
         const sendBtn = document.getElementById('sendBtn');
 
+        // Botón para generar ID de 9 dígitos aleatorios automáticamente para nuevos usuarios
+        registerBtn.addEventListener('click', () => {
+            const random9Digits = Math.floor(100000000 + Math.random() * 900000000).toString();
+            userInput.value = random9Digits;
+            const password = prompt('Nuevo usuario generado (' + random9Digits + '). Por favor, ingresa tu contraseña secreta para este nodo:');
+            
+            if(password) {
+                socket.emit('register_node', { username: 'DIO' + random9Digits, password: password });
+            }
+        });
+
+        socket.on('register_success', (data) => {
+            alert('¡Nodo registrado con éxito!\nTu usuario completo es: ' + data.username + '\nGuarda tu contraseña.');
+        });
+
         authBtn.addEventListener('click', () => {
-            const val = credentialInput.value.trim();
-            if(val) {
-                socket.emit('auth_node', { credential: val });
+            const rawUser = userInput.value.trim();
+            const password = passInput.value.trim();
+            
+            if(rawUser && password) {
+                // Combina el prefijo predeterminado DIO con el número ingresado
+                const fullUsername = rawUser.startsWith('DIO') ? rawUser : 'DIO' + rawUser;
+                socket.emit('auth_node', { username: fullUsername, password: password });
+            } else {
+                alert('Ingrese su identificador y contraseña.');
             }
         });
 
         socket.on('auth_success', (data) => {
             authPanel.classList.add('hidden');
             commPanel.classList.remove('hidden');
-            
             userBadge.className = 'badge-vip';
             userBadge.innerHTML = data.badge;
         });
