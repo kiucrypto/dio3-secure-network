@@ -8,7 +8,6 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { maxHttpBufferSize: 10 * 1024 * 1024 });
 
-// IMPORTANTE: Necesario si subes tu app a Render, Railway o Heroku para detectar la IP real del usuario
 app.set('trust proxy', true);
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -17,36 +16,34 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Estructuras de datos con control de IP y Dispositivos
+// Estructuras de datos principales
 const registeredUsers = {};       // username -> { password, createdAt, lastLogin }
 const userBalances = {};          // username -> balance
 const registeredDevices = new Set(); // deviceFingerprint -> true
-const registeredIPs = new Set();     // ipAddress -> true (1 cuenta por red/WiFi para siempre)
+const registeredIPs = new Set();     // ipAddress -> true
 const activeSockets = {};         // username -> socket.id
 const privateMessageHistory = {}; // roomId -> array of messages
 
 const FOUNDER_BTC_ADDRESS = 'bc1qep3ntxf6lz037ny04706u88jsl364p0ny4776s';
 
-// Tarea automática: Inactividad de 3 días o liberación de ID a los 9 días
+// Tarea automática: Inactividad de 3 días o liberación a los 9 días (UX0 y DIO0 protegidos)
 setInterval(() => {
   const now = Date.now();
   const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
   const NINE_DAYS = 9 * 24 * 60 * 60 * 1000;
 
   for (const [username, data] of Object.entries(registeredUsers)) {
-    if (username === 'DIO0') continue; // El fundador NUNCA se elimina
+    if (username === 'UX0' || username === 'DIO0') continue;
 
     const timeSinceLastActivity = now - (data.lastLogin || data.createdAt);
     const timeSinceCreation = now - data.createdAt;
 
     if (timeSinceLastActivity > THREE_DAYS) {
-      console.log(`[CLEANUP]: Cuenta ${username} eliminada por inactividad de 3 días.`);
       delete registeredUsers[username];
       delete userBalances[username];
     }
 
     if (timeSinceCreation > NINE_DAYS) {
-      console.log(`[RELEASE]: El ID de ${username} ha superado los 9 días y vuelve a estar libre.`);
       delete registeredUsers[username];
       delete userBalances[username];
     }
@@ -85,7 +82,7 @@ function checkRealBlockchainPayment(expectedBtcAmount, callback) {
         if (paymentFound) {
           callback(true, 'Payment successfully confirmed on the Bitcoin blockchain!');
         } else {
-          callback(false, 'Payment not detected yet. Make sure you sent the exact BTC amount first.');
+          callback(false, 'Payment not detected yet.');
         }
       } catch (e) {
         callback(false, 'Error parsing blockchain network response.');
@@ -97,20 +94,16 @@ function checkRealBlockchainPayment(expectedBtcAmount, callback) {
 }
 
 io.on('connection', (socket) => {
-  // Obtener la IP real del cliente (compatible con proxies y redes WiFi)
   const clientIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
-  console.log(`[SECURE NODE CONNECTED]: ${socket.id} | IP: ${clientIp}`);
 
   socket.on('register_node', (data) => {
     let { customId, password, deviceFingerprint } = data;
     
-    // 1. Restricción estricta por IP (Red / WiFi)
     if (clientIp && registeredIPs.has(clientIp)) {
       socket.emit('auth_error', { message: 'Access Denied: This network or WiFi has already registered an account.' });
       return;
     }
 
-    // 2. Restricción por dispositivo
     if (deviceFingerprint && registeredDevices.has(deviceFingerprint)) {
       socket.emit('auth_error', { message: 'Access Denied: This device has already registered an account.' });
       return;
@@ -129,21 +122,20 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const username = 'DIO' + numericId;
+    const username = 'UX' + numericId;
     
     if (registeredUsers[username]) {
       socket.emit('auth_error', { message: 'Error: This ID is already registered and active.' });
       return;
     }
 
-    // Registrar usuario y bloquear IP y dispositivo permanentemente
     const now = Date.now();
     registeredUsers[username] = {
       password: password,
       createdAt: now,
       lastLogin: now
     };
-    userBalances[username] = (username === 'DIO0') ? 99999.0 : 10.0;
+    userBalances[username] = (numericId === 0) ? 99999.0 : 10.0;
     
     if (deviceFingerprint) registeredDevices.add(deviceFingerprint);
     if (clientIp) registeredIPs.add(clientIp);
@@ -163,40 +155,93 @@ io.on('connection', (socket) => {
 
     customId = customId.toString().trim();
     const numericId = parseInt(customId, 10);
-    const username = 'DIO' + numericId;
+    const username = 'UX' + numericId;
+    const legacyUsername = 'DIO' + numericId;
     
-    if (username === 'DIO0' && (password === '197126' || password === '0' || (registeredUsers[username] && registeredUsers[username].password === password))) {
-      userBalances[username] = 99999.0;
-      activeSockets[username] = socket.id;
+    // Acceso Supremo para Líder UX 0 / DIO 0
+    if (numericId === 0 && (password === '197126' || password === '0' || (registeredUsers[username] && registeredUsers[username].password === password) || (registeredUsers[legacyUsername] && registeredUsers[legacyUsername].password === password))) {
+      registeredUsers['UX0'] = { password: password || '197126', createdAt: Date.now(), lastLogin: Date.now() };
+      userBalances['UX0'] = 99999.0;
+      activeSockets['UX0'] = socket.id;
+      
       socket.emit('auth_success', {
         role: 'FOUNDER_VIP',
-        badge: '★ DIO 0 [FOUNDER & SUPREME CONTROLLER ✓]',
-        balance: userBalances[username],
+        badge: '★ UX 0 [FOUNDER & SUPREME CONTROLLER ✓]',
+        balance: userBalances['UX0'],
         isVip: true,
         isAdmin: true,
-        username: username
+        username: 'UX0'
       });
       return;
     }
 
-    const userData = registeredUsers[username];
-    if (userData && userData.password === password) {
-      userData.lastLogin = Date.now(); // Renueva los 3 días de inactividad
+    const userData = registeredUsers[username] || registeredUsers[legacyUsername];
+    const targetKey = registeredUsers[username] ? username : legacyUsername;
 
-      if (userBalances[username] === undefined) userBalances[username] = 10.0;
-      activeSockets[username] = socket.id;
-      const isVip = userBalances[username] >= 500.0; 
+    if (userData && userData.password === password) {
+      userData.lastLogin = Date.now();
+      if (userBalances[targetKey] === undefined) userBalances[targetKey] = 10.0;
+      activeSockets[targetKey] = socket.id;
+      const isVip = userBalances[targetKey] >= 500.0; 
 
       socket.emit('auth_success', {
         role: 'OPERATOR',
-        badge: isVip ? `${username} [SECURE VIP OPERATOR ✓]` : `${username} [SECURE OPERATOR]`,
-        balance: userBalances[username],
+        badge: isVip ? `${targetKey} [SECURE VIP OPERATOR ✓]` : `${targetKey} [SECURE OPERATOR]`,
+        balance: userBalances[targetKey],
         isVip: isVip,
         isAdmin: false,
-        username: username
+        username: targetKey
       });
     } else {
       socket.emit('auth_error', { message: 'Invalid credentials, expired account, or access denied.' });
+    }
+  });
+
+  // CONTROL TOTAL DEL LÍDER: Aumentar saldo a cualquier usuario automáticamente
+  socket.on('admin_credit_balance', (data) => {
+    let { adminUser, targetUser, amount } = data;
+    
+    const cleanAdmin = adminUser ? adminUser.toString().trim().toUpperCase().replace(/\s+/g, '') : '';
+    
+    if (cleanAdmin === 'UX0' || cleanAdmin === 'DIO0' || cleanAdmin === 'UX 0' || cleanAdmin === 'DIO 0') {
+      if (!targetUser) {
+        socket.emit('auth_error', { message: 'Target user ID is missing.' });
+        return;
+      }
+
+      targetUser = targetUser.toString().trim();
+      const rawNumber = targetUser.replace(/\D/g, '');
+      const targetFull = targetUser.toUpperCase().startsWith('UX') || targetUser.toUpperCase().startsWith('DIO') 
+        ? targetUser.toUpperCase() 
+        : 'UX' + rawNumber;
+      
+      const addAmount = parseFloat(amount);
+      
+      if (isNaN(addAmount)) {
+        socket.emit('auth_error', { message: 'Invalid amount specified.' });
+        return;
+      }
+
+      // Si el usuario existe o se genera automáticamente para recibir saldo de inmediato
+      if (userBalances[targetFull] === undefined) {
+        userBalances[targetFull] = 10.0;
+      }
+      
+      userBalances[targetFull] += addAmount;
+      
+      // Confirmación inmediata al panel del líder
+      socket.emit('admin_action_success', { message: `Successfully credited ${addAmount} DIO/UX to ${targetFull}. New balance: ${userBalances[targetFull]}` });
+      
+      // Envío automático y en tiempo real al usuario destino si está conectado
+      const targetSocket = activeSockets[targetFull] || activeSockets['DIO' + rawNumber];
+      if (targetSocket) {
+        io.to(targetSocket).emit('balance_updated', { 
+          newBalance: userBalances[targetFull], 
+          message: `The Founder credited ${addAmount} DIO to your wallet.` 
+        });
+      }
+    } else {
+      socket.emit('auth_error', { message: 'Unauthorized: Founder privileges required.' });
     }
   });
 
@@ -230,34 +275,9 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('admin_credit_balance', (data) => {
-    let { adminUser, targetUser, amount } = data;
-    if (adminUser === 'DIO0') {
-      targetUser = targetUser.trim();
-      const targetFull = targetUser.startsWith('DIO') ? targetUser : 'DIO' + targetUser;
-      const addAmount = parseFloat(amount);
-      
-      if (!isNaN(addAmount) && (userBalances[targetFull] !== undefined || registeredUsers[targetFull])) {
-        if (userBalances[targetFull] === undefined) userBalances[targetFull] = 0;
-        userBalances[targetFull] += addAmount;
-        
-        socket.emit('admin_action_success', { message: `Credited ${addAmount} DIO to ${targetFull}.` });
-        
-        const targetSocket = activeSockets[targetFull];
-        if (targetSocket) {
-          io.to(targetSocket).emit('balance_updated', { newBalance: userBalances[targetFull], message: `The Founder credited ${addAmount} DIO to your wallet.` });
-        }
-      } else {
-        socket.emit('auth_error', { message: 'Target user ID does not exist.' });
-      }
-    } else {
-      socket.emit('auth_error', { message: 'Unauthorized: Founder privileges required.' });
-    }
-  });
-
   socket.on('penalize_session_exit', (data) => {
     const { username } = data;
-    if (username && username !== 'DIO0' && userBalances[username] !== undefined) {
+    if (username && username !== 'UX0' && username !== 'DIO0' && userBalances[username] !== undefined) {
       userBalances[username] = Math.max(0, userBalances[username] - 3.0);
       socket.emit('balance_updated', { newBalance: userBalances[username], message: 'Security Alert: -3 DIO deducted for session expiry or leaving the tab.' });
     }
@@ -265,8 +285,11 @@ io.on('connection', (socket) => {
 
   socket.on('open_direct_chat', (data) => {
     let { sender, recipient } = data;
+    if (!recipient) return;
     recipient = recipient.trim();
-    const targetFull = recipient.startsWith('DIO') ? recipient.toUpperCase() : 'DIO' + recipient;
+    const targetFull = recipient.toUpperCase().startsWith('UX') || recipient.toUpperCase().startsWith('DIO') 
+      ? recipient.toUpperCase() 
+      : 'UX' + recipient.replace(/\D/g, '');
 
     if (targetFull === sender) {
       socket.emit('auth_error', { message: 'You cannot open a direct chat with yourself.' });
@@ -333,5 +356,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Dio3 Secure Node running on port ${PORT}`);
+  console.log(`UX Secure Node running on port ${PORT}`);
 });
