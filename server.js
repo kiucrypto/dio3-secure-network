@@ -16,13 +16,13 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Estructuras de datos principales
-const registeredUsers = {};       // username -> { password, createdAt, lastLogin }
-const userBalances = {};          // username -> balance
-const registeredDevices = new Set(); // deviceFingerprint -> true
-const registeredIPs = new Set();     // ipAddress -> true
-const activeSockets = {};         // username -> socket.id
-const privateMessageHistory = {}; // roomId -> array of messages
+// Estructuras de seguridad estrictas (Listas Negras Definitivas)
+const registeredUsers = {};          // username -> { password, createdAt, lastLogin, fingerprint, ip }
+const userBalances = {};             // username -> balance
+const bannedDeviceFingerprints = new Set(); // Huellas de hardware únicas bloqueadas permanentemente
+const bannedIPs = new Set();               // Direcciones IP / Redes WiFi bloqueadas para registros
+const activeSockets = {};            // username -> socket.id
+const privateMessageHistory = {};    // roomId -> array of messages
 
 const FOUNDER_BTC_ADDRESS = 'bc1qep3ntxf6lz037ny04706u88jsl364p0ny4776s';
 
@@ -94,18 +94,26 @@ function checkRealBlockchainPayment(expectedBtcAmount, callback) {
 }
 
 io.on('connection', (socket) => {
-  const clientIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+  const rawIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address || '';
+  const clientIp = rawIp.split(',')[0].trim();
+
+  socket.on('check_security_status', (data) => {
+    const { deviceFingerprint } = data || {};
+    if ((clientIp && bannedIPs.has(clientIp)) || (deviceFingerprint && bannedDeviceFingerprints.has(deviceFingerprint))) {
+      socket.emit('security_lockout', { message: 'CRITICAL SECURITY BLOCK: This network or device has already registered an account.' });
+    }
+  });
 
   socket.on('register_node', (data) => {
     let { customId, password, deviceFingerprint } = data;
     
-    if (clientIp && registeredIPs.has(clientIp)) {
-      socket.emit('auth_error', { message: 'Access Denied: This network or WiFi has already registered an account.' });
+    if (clientIp && bannedIPs.has(clientIp)) {
+      socket.emit('auth_error', { message: 'SECURITY BLOCK: This network (IP) has already registered an account. No more registrations allowed.' });
       return;
     }
 
-    if (deviceFingerprint && registeredDevices.has(deviceFingerprint)) {
-      socket.emit('auth_error', { message: 'Access Denied: This device has already registered an account.' });
+    if (deviceFingerprint && bannedDeviceFingerprints.has(deviceFingerprint)) {
+      socket.emit('auth_error', { message: 'SECURITY BLOCK: This phone/device has already registered an account. Strict 1-device limit.' });
       return;
     }
 
@@ -123,8 +131,9 @@ io.on('connection', (socket) => {
     }
 
     const username = 'UX' + numericId;
+    const legacyUsername = 'DIO' + numericId;
     
-    if (registeredUsers[username]) {
+    if (registeredUsers[username] || registeredUsers[legacyUsername]) {
       socket.emit('auth_error', { message: 'Error: This ID is already registered and active.' });
       return;
     }
@@ -133,15 +142,17 @@ io.on('connection', (socket) => {
     registeredUsers[username] = {
       password: password,
       createdAt: now,
-      lastLogin: now
+      lastLogin: now,
+      deviceFingerprint: deviceFingerprint || 'unknown',
+      ip: clientIp || 'unknown'
     };
     userBalances[username] = (numericId === 0) ? 99999.0 : 10.0;
     
-    if (deviceFingerprint) registeredDevices.add(deviceFingerprint);
-    if (clientIp) registeredIPs.add(clientIp);
+    if (clientIp) bannedIPs.add(clientIp);
+    if (deviceFingerprint) bannedDeviceFingerprints.add(deviceFingerprint);
     
     socket.emit('register_success', { 
-      message: `Node ${username} registered successfully! You can now log in.`,
+      message: `Node ${username} registered successfully! Network and device locked.`,
       username: username
     });
   });
@@ -158,7 +169,6 @@ io.on('connection', (socket) => {
     const username = 'UX' + numericId;
     const legacyUsername = 'DIO' + numericId;
     
-    // Acceso Supremo para Líder UX 0 / DIO 0
     if (numericId === 0 && (password === '197126' || password === '0' || (registeredUsers[username] && registeredUsers[username].password === password) || (registeredUsers[legacyUsername] && registeredUsers[legacyUsername].password === password))) {
       registeredUsers['UX0'] = { password: password || '197126', createdAt: Date.now(), lastLogin: Date.now() };
       userBalances['UX0'] = 99999.0;
@@ -197,7 +207,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // CONTROL TOTAL DEL LÍDER: Aumentar saldo a cualquier usuario automáticamente
   socket.on('admin_credit_balance', (data) => {
     let { adminUser, targetUser, amount } = data;
     
@@ -222,22 +231,19 @@ io.on('connection', (socket) => {
         return;
       }
 
-      // Si el usuario existe o se genera automáticamente para recibir saldo de inmediato
       if (userBalances[targetFull] === undefined) {
         userBalances[targetFull] = 10.0;
       }
       
       userBalances[targetFull] += addAmount;
       
-      // Confirmación inmediata al panel del líder
-      socket.emit('admin_action_success', { message: `Successfully credited ${addAmount} DIO/UX to ${targetFull}. New balance: ${userBalances[targetFull]}` });
+      socket.emit('admin_action_success', { message: `Successfully credited ${addAmount} to ${targetFull}. New balance: ${userBalances[targetFull]}` });
       
-      // Envío automático y en tiempo real al usuario destino si está conectado
       const targetSocket = activeSockets[targetFull] || activeSockets['DIO' + rawNumber];
       if (targetSocket) {
         io.to(targetSocket).emit('balance_updated', { 
           newBalance: userBalances[targetFull], 
-          message: `The Founder credited ${addAmount} DIO to your wallet.` 
+          message: `The Founder credited ${addAmount} to your wallet.` 
         });
       }
     } else {
@@ -267,7 +273,7 @@ io.on('connection', (socket) => {
         userBalances[username] += creditedDio;
         socket.emit('balance_updated', { 
           newBalance: userBalances[username], 
-          message: `Payment verified on blockchain! ${creditedDio} DIO credited to your wallet.` 
+          message: `Payment verified on blockchain! ${creditedDio} credited to your wallet.` 
         });
       } else {
         socket.emit('auth_error', { message: `Verification failed: ${message}` });
@@ -275,11 +281,25 @@ io.on('connection', (socket) => {
     });
   });
 
+  // PENALIZACIÓN ESTRICTA: Al expirar el temporizador/salir de la sesión, descuenta saldo, borra chats y exige reingreso
   socket.on('penalize_session_exit', (data) => {
     const { username } = data;
     if (username && username !== 'UX0' && username !== 'DIO0' && userBalances[username] !== undefined) {
-      userBalances[username] = Math.max(0, userBalances[username] - 3.0);
-      socket.emit('balance_updated', { newBalance: userBalances[username], message: 'Security Alert: -3 DIO deducted for session expiry or leaving the tab.' });
+      // Descontar saldo configurado (ej: 1 o 3 de saldo)
+      userBalances[username] = Math.max(0, userBalances[username] - 1.0);
+
+      // Limpiar y destruir el historial de chats privados asociados a este usuario para máxima privacidad y seguridad
+      for (const roomId of Object.keys(privateMessageHistory)) {
+        if (roomId.includes(username)) {
+          delete privateMessageHistory[roomId];
+        }
+      }
+
+      // Notificar al cliente la penalización, la destrucción de chats y forzar la salida al login
+      socket.emit('force_logout_penalty', { 
+        newBalance: userBalances[username], 
+        message: 'Security Alert: Session expired. -1 DIO deducted, chat history wiped, and forced to re-login.' 
+      });
     }
   });
 
