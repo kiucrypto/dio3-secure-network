@@ -8,20 +8,51 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { maxHttpBufferSize: 10 * 1024 * 1024 });
 
+// IMPORTANTE: Necesario si subes tu app a Render, Railway o Heroku para detectar la IP real del usuario
+app.set('trust proxy', true);
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-const registeredUsers = {}; // username -> password
-const userBalances = {};    // username -> balance
-const activeSockets = {};   // username -> socket.id
+// Estructuras de datos con control de IP y Dispositivos
+const registeredUsers = {};       // username -> { password, createdAt, lastLogin }
+const userBalances = {};          // username -> balance
+const registeredDevices = new Set(); // deviceFingerprint -> true
+const registeredIPs = new Set();     // ipAddress -> true (1 cuenta por red/WiFi para siempre)
+const activeSockets = {};         // username -> socket.id
 const privateMessageHistory = {}; // roomId -> array of messages
 
 const FOUNDER_BTC_ADDRESS = 'bc1qep3ntxf6lz037ny04706u88jsl364p0ny4776s';
 
-// Verificación real de pagos en la blockchain (Pre-paid policy)
+// Tarea automática: Inactividad de 3 días o liberación de ID a los 9 días
+setInterval(() => {
+  const now = Date.now();
+  const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
+  const NINE_DAYS = 9 * 24 * 60 * 60 * 1000;
+
+  for (const [username, data] of Object.entries(registeredUsers)) {
+    if (username === 'DIO0') continue; // El fundador NUNCA se elimina
+
+    const timeSinceLastActivity = now - (data.lastLogin || data.createdAt);
+    const timeSinceCreation = now - data.createdAt;
+
+    if (timeSinceLastActivity > THREE_DAYS) {
+      console.log(`[CLEANUP]: Cuenta ${username} eliminada por inactividad de 3 días.`);
+      delete registeredUsers[username];
+      delete userBalances[username];
+    }
+
+    if (timeSinceCreation > NINE_DAYS) {
+      console.log(`[RELEASE]: El ID de ${username} ha superado los 9 días y vuelve a estar libre.`);
+      delete registeredUsers[username];
+      delete userBalances[username];
+    }
+  }
+}, 60 * 60 * 1000);
+
 function checkRealBlockchainPayment(expectedBtcAmount, callback) {
   const url = `https://mempool.space/api/address/${FOUNDER_BTC_ADDRESS}/txs`;
   
@@ -66,10 +97,25 @@ function checkRealBlockchainPayment(expectedBtcAmount, callback) {
 }
 
 io.on('connection', (socket) => {
-  console.log(`[SECURE NODE CONNECTED]: ${socket.id}`);
+  // Obtener la IP real del cliente (compatible con proxies y redes WiFi)
+  const clientIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+  console.log(`[SECURE NODE CONNECTED]: ${socket.id} | IP: ${clientIp}`);
 
   socket.on('register_node', (data) => {
-    let { customId, password } = data;
+    let { customId, password, deviceFingerprint } = data;
+    
+    // 1. Restricción estricta por IP (Red / WiFi)
+    if (clientIp && registeredIPs.has(clientIp)) {
+      socket.emit('auth_error', { message: 'Access Denied: This network or WiFi has already registered an account.' });
+      return;
+    }
+
+    // 2. Restricción por dispositivo
+    if (deviceFingerprint && registeredDevices.has(deviceFingerprint)) {
+      socket.emit('auth_error', { message: 'Access Denied: This device has already registered an account.' });
+      return;
+    }
+
     if (!customId || password === undefined) {
       socket.emit('auth_error', { message: 'Missing ID or numeric password.' });
       return;
@@ -84,13 +130,23 @@ io.on('connection', (socket) => {
     }
 
     const username = 'DIO' + numericId;
+    
     if (registeredUsers[username]) {
-      socket.emit('auth_error', { message: 'Error: This ID is already registered.' });
+      socket.emit('auth_error', { message: 'Error: This ID is already registered and active.' });
       return;
     }
 
-    registeredUsers[username] = password;
+    // Registrar usuario y bloquear IP y dispositivo permanentemente
+    const now = Date.now();
+    registeredUsers[username] = {
+      password: password,
+      createdAt: now,
+      lastLogin: now
+    };
     userBalances[username] = (username === 'DIO0') ? 99999.0 : 10.0;
+    
+    if (deviceFingerprint) registeredDevices.add(deviceFingerprint);
+    if (clientIp) registeredIPs.add(clientIp);
     
     socket.emit('register_success', { 
       message: `Node ${username} registered successfully! You can now log in.`,
@@ -109,7 +165,7 @@ io.on('connection', (socket) => {
     const numericId = parseInt(customId, 10);
     const username = 'DIO' + numericId;
     
-    if (username === 'DIO0' && (password === '197126' || password === '0' || registeredUsers[username] === password)) {
+    if (username === 'DIO0' && (password === '197126' || password === '0' || (registeredUsers[username] && registeredUsers[username].password === password))) {
       userBalances[username] = 99999.0;
       activeSockets[username] = socket.id;
       socket.emit('auth_success', {
@@ -123,7 +179,10 @@ io.on('connection', (socket) => {
       return;
     }
 
-    if (registeredUsers[username] && registeredUsers[username] === password) {
+    const userData = registeredUsers[username];
+    if (userData && userData.password === password) {
+      userData.lastLogin = Date.now(); // Renueva los 3 días de inactividad
+
       if (userBalances[username] === undefined) userBalances[username] = 10.0;
       activeSockets[username] = socket.id;
       const isVip = userBalances[username] >= 500.0; 
@@ -137,7 +196,7 @@ io.on('connection', (socket) => {
         username: username
       });
     } else {
-      socket.emit('auth_error', { message: 'Invalid credentials or access denied.' });
+      socket.emit('auth_error', { message: 'Invalid credentials, expired account, or access denied.' });
     }
   });
 
@@ -204,7 +263,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Chat directo por ID con borrado automático de historial al cambiar de conversación
   socket.on('open_direct_chat', (data) => {
     let { sender, recipient } = data;
     recipient = recipient.trim();
@@ -220,7 +278,6 @@ io.on('connection', (socket) => {
 
     socket.join(chatRoomId);
 
-    // Si es una conversación nueva o limpia, aseguramos limpieza de datos previos
     if (!privateMessageHistory[chatRoomId]) {
       privateMessageHistory[chatRoomId] = [];
     }
